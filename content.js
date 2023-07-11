@@ -1,5 +1,3 @@
-// content.js
-
 function startSpeechRecognition() {
     // Start capturing audio
     let recognition = new webkitSpeechRecognition();
@@ -7,7 +5,7 @@ function startSpeechRecognition() {
 
     recognition.onresult = function (event) {
         let transcript = event.results[0][0].transcript;
-        document.getElementById('prompt-textarea').value = transcript;
+        document.getElementById('prompt-textarea').value += transcript;
         console.log(transcript);
     }
     recognition.start();
@@ -20,10 +18,10 @@ function createMicButton() {
     micButton.style.backgroundRepeat = 'no-repeat';
     micButton.style.backgroundSize = 'contain';
     micButton.style.backgroundPosition = 'center';
-    micButton.style.width = '30px';
-    micButton.style.height = '30px';
-    micButton.style.border = '1px solid white';
-    micButton.style.padding = '5px';
+    micButton.style.borderRadius = '100%';
+    micButton.style.padding = '10px';
+    micButton.style.marginRight = '15px';
+
     micButton.onmouseover = () => {
         micButton.style.backgroundColor = 'grey';
     };
@@ -38,6 +36,20 @@ function createMicButton() {
 setTimeout(() => {
     let textArea = document.getElementById('prompt-textarea');
     let parentElement = textArea.parentElement;
+
+    // Create a wrapper div
+    let wrapperDiv = document.createElement('div');
+    wrapperDiv.style.display = 'flex';
+    wrapperDiv.style.alignItems = 'center';
+
+    // Create the mic button
     const micButton = createMicButton();
-    parentElement.insertBefore(micButton, parentElement.firstChild);
+
+    // Remove the textarea from its parent and append it to the wrapper div
+    parentElement.removeChild(textArea);
+    wrapperDiv.appendChild(micButton);
+    wrapperDiv.appendChild(textArea);
+
+    // Add the wrapper div to the original parent of the textarea
+    parentElement.appendChild(wrapperDiv);
 }, 2000);
