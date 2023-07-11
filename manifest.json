@@ -3,6 +3,12 @@
     "name": "ChatGPT Mic",
     "version": "0.0.1",
     "description": "Adds a speech to text mic to the ChatGPT website.",
+    "icons": {
+        "16": "src/assets/icon/icon-16.png",
+        "32": "src/assets/icon/icon-32.png",
+        "48": "src/assets/icon/icon-48.png",
+        "128": "src/assets/icon/icon-128.png"
+    },
     "content_scripts": [
         {
             "js": [
@@ -16,7 +22,8 @@
     "web_accessible_resources": [
         {
             "resources": [
-                "mic-icon.png"
+                "src/assets/mic-icon.png",
+                "src/assets/mic-icon-active.png"
             ],
             "matches": [
                 "https://chat.openai.com/*"
