@@ -1,0 +1,16 @@
+{
+    "manifest_version": 3,
+    "name": "ChatGPT Mic",
+    "version": "0.0.1",
+    "description": "Adds a speech to text mic to the ChatGPT website.",
+    "content-scripts": [
+        {
+            "js": [
+                "content.js"
+            ],
+            "matches": [
+                "https://www.chat.openai.com/*"
+            ]
+        }
+    ]
+}
