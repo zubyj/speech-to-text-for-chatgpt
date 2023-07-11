@@ -1,3 +1,18 @@
+// content.js
+
+function startSpeechRecognition() {
+    // Start capturing audio
+    let recognition = new webkitSpeechRecognition();
+    recognition.lang = 'en-US';
+
+    recognition.onresult = function (event) {
+        let transcript = event.results[0][0].transcript;
+        document.getElementById('prompt-textarea').value = transcript;
+        console.log(transcript);
+    }
+    recognition.start();
+}
+
 function createMicButton() {
     let micButton = document.createElement('button');
     let imageUrl = chrome.runtime.getURL("mic-icon.png");
@@ -15,12 +30,11 @@ function createMicButton() {
     micButton.onmouseout = () => {
         micButton.style.backgroundColor = 'transparent';
     };
-    micButton.onclick = () => {
-        console.log('mic button clicked');
-    };
+    micButton.onclick = startSpeechRecognition;
 
     return micButton;
 }
+
 setTimeout(() => {
     let textArea = document.getElementById('prompt-textarea');
     let parentElement = textArea.parentElement;
