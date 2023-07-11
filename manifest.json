@@ -19,7 +19,7 @@
                 "mic-icon.png"
             ],
             "matches": [
-                "<all_urls>"
+                "https://chat.openai.com/*"
             ]
         }
     ]
