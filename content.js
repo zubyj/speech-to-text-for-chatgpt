@@ -3,25 +3,19 @@ function startSpeechRecognition(micButton) {
     let recognition = new webkitSpeechRecognition();
     recognition.lang = 'en-US';
     let textArea = document.getElementById('prompt-textarea');
-    textArea.value = 'Listening ...'
     recognition.onstart = function () {
         let newImageUrl = chrome.runtime.getURL("src/assets/mic-icon-active.png");
         micButton.style.backgroundImage = `url('${newImageUrl}')`;
+        textArea.value = 'Say something ...'
     }
     recognition.onresult = function (event) {
         let transcript = event.results[0][0].transcript;
         textArea.value = transcript;
+
+        textArea.focus();
+
         let newImageUrl = chrome.runtime.getURL("src/assets/mic-icon.png");
         micButton.style.backgroundImage = `url('${newImageUrl}')`;
-
-        // Create new 'input' event
-        let e = new Event('input', {
-            bubbles: true,
-            cancelable: true,
-        });
-
-        // Dispatch it on the textarea
-        textArea.dispatchEvent(e);
     }
     recognition.start();
 }
@@ -29,7 +23,7 @@ function startSpeechRecognition(micButton) {
 // Creates and returns a mic button
 function createMicButton() {
     let micButton = document.createElement('button');
-    micButton.id = 'my-mic-button';
+    micButton.id = 'mic-button';
     let imageUrl = chrome.runtime.getURL("src/assets/mic-icon.png");
     micButton.style.backgroundImage = `url('${imageUrl}')`;
     micButton.style.backgroundRepeat = 'no-repeat';
@@ -45,12 +39,12 @@ function createMicButton() {
 // When the tab is finished loading, add the mic button to the page
 chrome.runtime.onMessage.addListener((request) => {
     if (request.message === 'TabUpdated') {
+
         let textArea = document.getElementById('prompt-textarea');
         let parentElement = textArea.parentElement;
 
-        let existingMicButton = document.getElementById('my-mic-button');
-        if (existingMicButton) {
-            return
+        if (document.getElementById('mic-button')) {
+            return;
         }
 
         let wrapperDiv = document.createElement('div');
@@ -63,6 +57,16 @@ chrome.runtime.onMessage.addListener((request) => {
         wrapperDiv.appendChild(textArea);
 
         parentElement.appendChild(wrapperDiv);
+
+        // Add input event listener to textArea
+        textArea.addEventListener('input', () => {
+            // If user starts typing, hide the mic button
+            if (textArea.value !== '') {
+                micButton.style.display = 'none';
+            } else {
+                // Show the mic button if textArea is empty
+                micButton.style.display = 'inline-block';
+            }
+        });
     }
 });
-
