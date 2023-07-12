@@ -32,5 +32,8 @@
                 "https://chat.openai.com/*"
             ]
         }
+    ],
+    "permissions": [
+        "tabs"
     ]
 }
