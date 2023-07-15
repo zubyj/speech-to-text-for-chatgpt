@@ -25,8 +25,9 @@
     "web_accessible_resources": [
         {
             "resources": [
-                "src/assets/mic-icon.png",
-                "src/assets/mic-icon-active.png"
+                "src/assets/mic.png",
+                "src/assets/mic-active.png",
+                "styles.css"
             ],
             "matches": [
                 "https://chat.openai.com/*"

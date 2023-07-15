@@ -4,49 +4,63 @@ function startSpeechRecognition(micButton) {
     recognition.lang = 'en-US';
     let textArea = document.getElementById('prompt-textarea');
     recognition.onstart = function () {
-        let newImageUrl = chrome.runtime.getURL("src/assets/mic-icon-active.png");
+        let newImageUrl = chrome.runtime.getURL("src/assets/mic-active.png");
         micButton.style.backgroundImage = `url('${newImageUrl}')`;
+        micButton.classList.add('active');  // Add 'active' class
         textArea.value = 'Say something ...'
     }
     recognition.onresult = function (event) {
         let transcript = event.results[0][0].transcript;
         textArea.value = transcript;
         textArea.focus();
-        let newImageUrl = chrome.runtime.getURL("src/assets/mic-icon.png");
+        micButton.classList.remove('active');  // Remove 'active' class
+        let newImageUrl = chrome.runtime.getURL("src/assets/mic.png");
         micButton.style.backgroundImage = `url('${newImageUrl}')`;
     }
     recognition.start();
+
+    // Stop the recognition when the mic button is clicked while active
+    micButton.onclick = () => {
+        if (micButton.classList.contains('active')) {
+            recognition.stop();
+            textArea.value = '';
+            micButton.classList.remove('active');  // Remove 'active' class
+            let newImageUrl = chrome.runtime.getURL("src/assets/mic.png");
+            micButton.style.backgroundImage = `url('${newImageUrl}')`;
+        } else {
+            startSpeechRecognition(micButton);
+        }
+    };
 }
+
 
 // Creates and returns a mic button
 function createMicButton() {
     let micButton = document.createElement('button');
     micButton.id = 'mic-button';
-    let imageUrl = chrome.runtime.getURL("src/assets/mic-icon.png");
+    let imageUrl = chrome.runtime.getURL("src/assets/mic.png");
     micButton.style.backgroundImage = `url('${imageUrl}')`;
-    micButton.style.backgroundRepeat = 'no-repeat';
-    micButton.style.backgroundSize = 'contain';
-    micButton.style.width = '15px';
-    micButton.style.height = '15px';
-    micButton.style.padding = '10px';
-    micButton.style.marginRight = '15px';
-    micButton.onclick = () => startSpeechRecognition(micButton);  // Pass micButton as argument
+    micButton.onclick = () => startSpeechRecognition(micButton);
     return micButton;
 }
 
-// When the tab is finished loading, add the mic button to the page
 chrome.runtime.onMessage.addListener((request) => {
     if (request.message === 'TabUpdated') {
         if (document.getElementById('mic-button')) {
             return;
         }
+        fetch(chrome.runtime.getURL('styles.css'))
+            .then(response => response.text())
+            .then(data => {
+                let style = document.createElement('style');
+                style.innerHTML = data;
+                document.head.appendChild(style);
+            });
 
         let textArea = document.getElementById('prompt-textarea');
         let parentElement = textArea.parentElement;
         let wrapperDiv = document.createElement('div');
-        wrapperDiv.style.display = 'flex';
-        wrapperDiv.style.flexDirection = 'row';
-        wrapperDiv.style.alignItems = 'center';
+        wrapperDiv.classList.add('wrapper-div');
 
         const micButton = createMicButton();
         parentElement.removeChild(textArea);
