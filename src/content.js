@@ -69,38 +69,40 @@ function createMicButton() {
 
 chrome.runtime.onMessage.addListener((request) => {
     if (request.message === 'TabUpdated') {
-        if (document.getElementById('mic-button')) {
-            return;
-        }
-        fetch(chrome.runtime.getURL('./src/assets/styles.css'))
-            .then(response => response.text())
-            .then(data => {
-                let style = document.createElement('style');
-                style.innerHTML = data;
-                document.head.appendChild(style);
-            });
-
-        let textArea = document.getElementById('prompt-textarea');
-        let parentElement = textArea.parentElement;
-        let wrapperDiv = document.createElement('div');
-        wrapperDiv.classList.add('wrapper-div');
-
-        const micButton = createMicButton();
-        parentElement.removeChild(textArea);
-        wrapperDiv.appendChild(micButton);
-        wrapperDiv.appendChild(textArea);
-
-        parentElement.appendChild(wrapperDiv);
-
-        // Add input event listener to textArea
-        textArea.addEventListener('input', () => {
-            // If user starts typing, hide the mic button
-            if (textArea.value !== '') {
-                micButton.style.display = 'none';
-            } else {
-                // Show the mic button if textArea is empty
-                micButton.style.display = 'inline-block';
+        setTimeout(() => {
+            if (document.getElementById('mic-button')) {
+                return;
             }
-        });
+            fetch(chrome.runtime.getURL('./src/assets/styles.css'))
+                .then(response => response.text())
+                .then(data => {
+                    let style = document.createElement('style');
+                    style.innerHTML = data;
+                    document.head.appendChild(style);
+                });
+
+            let textArea = document.getElementById('prompt-textarea');
+            let parentElement = textArea.parentElement;
+            let wrapperDiv = document.createElement('div');
+            wrapperDiv.classList.add('wrapper-div');
+
+            const micButton = createMicButton();
+            parentElement.removeChild(textArea);
+            wrapperDiv.appendChild(micButton);
+            wrapperDiv.appendChild(textArea);
+
+            parentElement.appendChild(wrapperDiv);
+
+            // Add input event listener to textArea
+            textArea.addEventListener('input', () => {
+                // If user starts typing, hide the mic button
+                if (textArea.value !== '') {
+                    micButton.style.display = 'none';
+                } else {
+                    // Show the mic button if textArea is empty
+                    micButton.style.display = 'inline-block';
+                }
+            });
+        }, 500);
     }
 });
