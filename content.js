@@ -11,9 +11,7 @@ function startSpeechRecognition(micButton) {
     recognition.onresult = function (event) {
         let transcript = event.results[0][0].transcript;
         textArea.value = transcript;
-
         textArea.focus();
-
         let newImageUrl = chrome.runtime.getURL("src/assets/mic-icon.png");
         micButton.style.backgroundImage = `url('${newImageUrl}')`;
     }
@@ -39,16 +37,15 @@ function createMicButton() {
 // When the tab is finished loading, add the mic button to the page
 chrome.runtime.onMessage.addListener((request) => {
     if (request.message === 'TabUpdated') {
-
-        let textArea = document.getElementById('prompt-textarea');
-        let parentElement = textArea.parentElement;
-
         if (document.getElementById('mic-button')) {
             return;
         }
 
+        let textArea = document.getElementById('prompt-textarea');
+        let parentElement = textArea.parentElement;
         let wrapperDiv = document.createElement('div');
         wrapperDiv.style.display = 'flex';
+        wrapperDiv.style.flexDirection = 'row';
         wrapperDiv.style.alignItems = 'center';
 
         const micButton = createMicButton();
