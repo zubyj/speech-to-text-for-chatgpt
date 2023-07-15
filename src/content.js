@@ -24,17 +24,24 @@ function startSpeechRecognition(micButton) {
 
     recognition.onresult = function (event) {
         let transcript = event.results[0][0].transcript;
-        textArea.value = transcript;
+        // get cursor position and selection if any
+        const selectionStart = textArea.selectionStart;
+        const selectionEnd = textArea.selectionEnd;
+        // insert transcript at cursor position
+        const value = textArea.value;
+        textArea.value = value.slice(0, selectionStart) + transcript + value.slice(selectionEnd);
+        // move cursor to end of inserted text
+        textArea.selectionStart = selectionStart + transcript.length;
+        textArea.selectionEnd = textArea.selectionStart;
+        // manually trigger input event
+        const inputEvent = new Event('input', { bubbles: true });
+        textArea.dispatchEvent(inputEvent);
         micButton.classList.remove('active');  // Remove 'active' class
         let newImageUrl = chrome.runtime.getURL("./src/assets/mic.png");
         micButton.style.backgroundImage = `url('${newImageUrl}')`;
+        textArea.focus();
     }
 
-    recognition.onend = function () {
-        micButton.classList.remove('active');  // Remove 'active' class
-        let newImageUrl = chrome.runtime.getURL("./src/assets/mic.png");
-        micButton.style.backgroundImage = `url('${newImageUrl}')`;
-    }
 
     recognition.start();
 
