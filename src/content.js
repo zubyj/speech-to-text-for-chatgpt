@@ -18,7 +18,6 @@ function startSpeechRecognition(micButton) {
     recognition.onspeechend = function () {
         // Start a timeout to stop recognition after 5 seconds of no speech
         timeout = setTimeout(() => {
-            textArea.value = '';
             recognition.stop();
         }, 5000);
     }
@@ -26,7 +25,6 @@ function startSpeechRecognition(micButton) {
     recognition.onresult = function (event) {
         let transcript = event.results[0][0].transcript;
         textArea.value = transcript;
-        textArea.focus();
         micButton.classList.remove('active');  // Remove 'active' class
         let newImageUrl = chrome.runtime.getURL("./src/assets/mic.png");
         micButton.style.backgroundImage = `url('${newImageUrl}')`;
@@ -45,7 +43,6 @@ function startSpeechRecognition(micButton) {
         if (micButton.classList.contains('active')) {
             recognition.stop();
             clearTimeout(timeout);  // Clear the timeout
-            textArea.value = '';
             micButton.classList.remove('active');  // Remove 'active' class
             let newImageUrl = chrome.runtime.getURL("./src/assets/mic.png");
             micButton.style.backgroundImage = `url('${newImageUrl}')`;
@@ -54,8 +51,6 @@ function startSpeechRecognition(micButton) {
         }
     };
 }
-
-
 
 // Creates and returns a mic button
 function createMicButton() {
