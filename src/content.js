@@ -82,18 +82,44 @@ chrome.runtime.onMessage.addListener((request) => {
                     style.innerHTML = data;
                     document.head.appendChild(style);
                 });
-
+            const micButton = createMicButton();
             let textArea = document.getElementById('prompt-textarea');
+
+            // ...
+
+            // Add input event listener to textArea
+            textArea.addEventListener('input', () => {
+                // If user starts typing, hide the mic button
+                if (textArea.value !== '') {
+                    micButton.style.display = 'none';
+                }
+            });
+
+            // Turn off speech recognition on enter (but not shift + enter)
+            textArea.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    micButton.style.display = 'inline-block'; // Show the mic button
+                }
+            });
+
+            // Get the submit button
+            const chat = document.querySelector('textarea[tabindex="0"]');
+            const submitButton = chat.parentNode.querySelector('button:nth-child(2)');
+            // Turn off speech recognition when submit button is clicked
+            submitButton.addEventListener('click', () => {
+                micButton.style.display = 'inline-block'; // Show the mic button
+            });
+
+
+            // Move the mic button and text area to a wrapper div
             let parentElement = textArea.parentElement;
             let wrapperDiv = document.createElement('div');
             wrapperDiv.classList.add('wrapper-div');
-
-            const micButton = createMicButton();
             parentElement.removeChild(textArea);
             wrapperDiv.appendChild(micButton);
             wrapperDiv.appendChild(textArea);
-
             parentElement.appendChild(wrapperDiv);
+            textArea.focus();
 
             // Add input event listener to textArea
             textArea.addEventListener('input', () => {
