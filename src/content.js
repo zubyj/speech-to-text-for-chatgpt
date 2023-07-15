@@ -3,23 +3,26 @@ function startSpeechRecognition(micButton) {
     let recognition = new webkitSpeechRecognition();
     recognition.lang = 'en-US';
     let textArea = document.getElementById('prompt-textarea');
+    let timeout;
+
     recognition.onstart = function () {
         let newImageUrl = chrome.runtime.getURL("/src/assets/mic-active.png");
         micButton.style.backgroundImage = `url('${newImageUrl}')`;
         micButton.classList.add('active');
-        textArea.value = 'Say something ...'
+    }
 
-        // Stop recognition after 5 seconds if no input is received
-        setTimeout(() => {
-            if (textArea.value === 'Say something ...') {
-                recognition.stop();
-                textArea.value = '';
-                micButton.classList.remove('active');  // Remove 'active' class
-                let newImageUrl = chrome.runtime.getURL("./src/assets/mic.png");
-                micButton.style.backgroundImage = `url('${newImageUrl}')`;
-            }
+    recognition.onspeechstart = function () {
+        clearTimeout(timeout);  // Clear the timeout when speech starts
+    }
+
+    recognition.onspeechend = function () {
+        // Start a timeout to stop recognition after 5 seconds of no speech
+        timeout = setTimeout(() => {
+            textArea.value = '';
+            recognition.stop();
         }, 5000);
     }
+
     recognition.onresult = function (event) {
         let transcript = event.results[0][0].transcript;
         textArea.value = transcript;
@@ -28,12 +31,20 @@ function startSpeechRecognition(micButton) {
         let newImageUrl = chrome.runtime.getURL("./src/assets/mic.png");
         micButton.style.backgroundImage = `url('${newImageUrl}')`;
     }
+
+    recognition.onend = function () {
+        micButton.classList.remove('active');  // Remove 'active' class
+        let newImageUrl = chrome.runtime.getURL("./src/assets/mic.png");
+        micButton.style.backgroundImage = `url('${newImageUrl}')`;
+    }
+
     recognition.start();
 
     // Stop the recognition when the mic button is clicked while active
     micButton.onclick = () => {
         if (micButton.classList.contains('active')) {
             recognition.stop();
+            clearTimeout(timeout);  // Clear the timeout
             textArea.value = '';
             micButton.classList.remove('active');  // Remove 'active' class
             let newImageUrl = chrome.runtime.getURL("./src/assets/mic.png");
@@ -43,6 +54,7 @@ function startSpeechRecognition(micButton) {
         }
     };
 }
+
 
 
 // Creates and returns a mic button
