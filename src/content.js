@@ -4,17 +4,28 @@ function startSpeechRecognition(micButton) {
     recognition.lang = 'en-US';
     let textArea = document.getElementById('prompt-textarea');
     recognition.onstart = function () {
-        let newImageUrl = chrome.runtime.getURL("src/assets/mic-active.png");
+        let newImageUrl = chrome.runtime.getURL("/src/assets/mic-active.png");
         micButton.style.backgroundImage = `url('${newImageUrl}')`;
-        micButton.classList.add('active');  // Add 'active' class
+        micButton.classList.add('active');
         textArea.value = 'Say something ...'
+
+        // Stop recognition after 5 seconds if no input is received
+        setTimeout(() => {
+            if (textArea.value === 'Say something ...') {
+                recognition.stop();
+                textArea.value = '';
+                micButton.classList.remove('active');  // Remove 'active' class
+                let newImageUrl = chrome.runtime.getURL("./src/assets/mic.png");
+                micButton.style.backgroundImage = `url('${newImageUrl}')`;
+            }
+        }, 5000);
     }
     recognition.onresult = function (event) {
         let transcript = event.results[0][0].transcript;
         textArea.value = transcript;
         textArea.focus();
         micButton.classList.remove('active');  // Remove 'active' class
-        let newImageUrl = chrome.runtime.getURL("src/assets/mic.png");
+        let newImageUrl = chrome.runtime.getURL("./src/assets/mic.png");
         micButton.style.backgroundImage = `url('${newImageUrl}')`;
     }
     recognition.start();
@@ -25,7 +36,7 @@ function startSpeechRecognition(micButton) {
             recognition.stop();
             textArea.value = '';
             micButton.classList.remove('active');  // Remove 'active' class
-            let newImageUrl = chrome.runtime.getURL("src/assets/mic.png");
+            let newImageUrl = chrome.runtime.getURL("./src/assets/mic.png");
             micButton.style.backgroundImage = `url('${newImageUrl}')`;
         } else {
             startSpeechRecognition(micButton);
@@ -38,7 +49,7 @@ function startSpeechRecognition(micButton) {
 function createMicButton() {
     let micButton = document.createElement('button');
     micButton.id = 'mic-button';
-    let imageUrl = chrome.runtime.getURL("src/assets/mic.png");
+    let imageUrl = chrome.runtime.getURL("./src/assets/mic.png");
     micButton.style.backgroundImage = `url('${imageUrl}')`;
     micButton.onclick = () => startSpeechRecognition(micButton);
     return micButton;
@@ -49,7 +60,7 @@ chrome.runtime.onMessage.addListener((request) => {
         if (document.getElementById('mic-button')) {
             return;
         }
-        fetch(chrome.runtime.getURL('styles.css'))
+        fetch(chrome.runtime.getURL('./src/assets/styles.css'))
             .then(response => response.text())
             .then(data => {
                 let style = document.createElement('style');

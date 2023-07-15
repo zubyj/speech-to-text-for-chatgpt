@@ -10,12 +10,12 @@
         "128": "src/assets/icons/icon-128.png"
     },
     "background": {
-        "service_worker": "background.js"
+        "service_worker": "src/background.js"
     },
     "content_scripts": [
         {
             "js": [
-                "content.js"
+                "src/content.js"
             ],
             "matches": [
                 "https://chat.openai.com/*"
@@ -27,7 +27,7 @@
             "resources": [
                 "src/assets/mic.png",
                 "src/assets/mic-active.png",
-                "styles.css"
+                "src/assets/styles.css"
             ],
             "matches": [
                 "https://chat.openai.com/*"

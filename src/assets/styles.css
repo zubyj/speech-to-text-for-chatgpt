@@ -53,7 +53,7 @@
     /* Make the ring larger than the button */
     border-radius: 50%;
     /* Make the ring circular */
-    border: 2px solid #000;
+    border: 2px solid grey;
     /* Adjust the color and thickness of the ring */
     animation: ring 1s infinite;
     /* Add the ring animation */
