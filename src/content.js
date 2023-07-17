@@ -6,6 +6,8 @@ class SpeechRecognitionManager {
         this.recognition.lang = 'en-US';
         this.recognition.interimResults = true;
         this.recognition.continuous = true;
+        this.isListening = false;
+
 
         this.setupRecognition();
         this.setupMicButton();
@@ -19,8 +21,11 @@ class SpeechRecognitionManager {
     }
 
     startRecognition() {
-        this.recognition.start();
-        this.updateMicButton("/src/assets/mic-active.png", 'add');
+        if (!this.isListening) {
+            this.recognition.start();
+            this.updateMicButton("/src/assets/mic-active.png", 'add');
+            this.isListening = true;
+        }
     }
 
     handleResult(event) {
@@ -34,9 +39,12 @@ class SpeechRecognitionManager {
     }
 
     endRecognition() {
+        this.recognition.stop();
         this.updateMicButton("./src/assets/mic.png", 'remove');
         this.textArea.focus();
+        this.isListening = false;
     }
+
 
     updateMicButton(imgPath, action) {
         const newImageUrl = chrome.runtime.getURL(imgPath);
