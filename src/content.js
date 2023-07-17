@@ -1,13 +1,17 @@
+let lastResultIndex = 0;
+
 function startSpeechRecognition(micButton) {
+    // Clear the textarea when a new recognition session starts
+    let textArea = document.getElementById('prompt-textarea');
     let recognition = new webkitSpeechRecognition();
     recognition.lang = 'en-US';
     recognition.interimResults = true;
-
-    let textArea = document.getElementById('prompt-textarea');
     let timeout;
+
 
     function setupRecognition(recognition) {
         recognition.onstart = function () {
+            lastResultIndex = 0; // Reset lastResultIndex
             let newImageUrl = chrome.runtime.getURL("/src/assets/mic-active.png");
             micButton.style.backgroundImage = `url('${newImageUrl}')`;
             micButton.classList.add('active');
@@ -18,7 +22,7 @@ function startSpeechRecognition(micButton) {
         }
 
         recognition.onspeechend = function () {
-            // Start a 5-second timer when the user stops speaking
+            // Start a 3-second timer when the user stops speaking
             timeout = setTimeout(() => {
                 recognition.abort(); // Stop recognition when the timer completes
                 micButton.classList.remove('active');
@@ -26,7 +30,7 @@ function startSpeechRecognition(micButton) {
                 micButton.style.backgroundImage = `url('${newImageUrl}')`;
                 textArea.focus();
             }, 3000); // 3000ms = 3s
-
+            textArea.value += ' ';
             // Create a new SpeechRecognition instance and start it
             let newRecognition = new webkitSpeechRecognition();
             newRecognition.lang = 'en-US';
@@ -36,8 +40,16 @@ function startSpeechRecognition(micButton) {
         }
 
         recognition.onresult = function (event) {
-            let transcript = event.results[0][0].transcript;
-            textArea.value = transcript;
+            console.log(event.results[0][0].transcript);
+            // Loop through new results starting from lastResultIndex
+            let transcript = '';
+            for (let i = lastResultIndex; i < event.results.length; i++) {
+                console.log(event.results[i][0].transcript)
+                transcript += event.results[i][0].transcript;
+            }
+            lastResultIndex = event.results.length;
+            // Append the new transcript to the existing content
+            textArea.value += transcript;
         }
     }
 
@@ -57,8 +69,6 @@ function startSpeechRecognition(micButton) {
         }
     };
 }
-
-
 
 // Creates and returns a mic button
 function createMicButton() {
