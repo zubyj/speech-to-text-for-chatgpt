@@ -27,13 +27,6 @@ function startSpeechRecognition(micButton) {
                 }
             }
             textArea.value = currSpeech;
-
-            // invoke event
-            var event = new Event('input', {
-                bubbles: true,
-                cancelable: true,
-            });
-            textArea.dispatchEvent(event);
         }
 
         recognition.onspeechend = function () {
