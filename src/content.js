@@ -1,4 +1,3 @@
-// Listens to the user voice input and appends result to the GPT textarea
 function startSpeechRecognition(micButton) {
     let recognition = new webkitSpeechRecognition();
     recognition.lang = 'en-US';
@@ -7,37 +6,48 @@ function startSpeechRecognition(micButton) {
     let textArea = document.getElementById('prompt-textarea');
     let timeout;
 
-    recognition.onstart = function () {
-        let newImageUrl = chrome.runtime.getURL("/src/assets/mic-active.png");
-        micButton.style.backgroundImage = `url('${newImageUrl}')`;
-        micButton.classList.add('active');
+    function setupRecognition(recognition) {
+        recognition.onstart = function () {
+            let newImageUrl = chrome.runtime.getURL("/src/assets/mic-active.png");
+            micButton.style.backgroundImage = `url('${newImageUrl}')`;
+            micButton.classList.add('active');
+        }
+
+        recognition.onspeechstart = function () {
+            clearTimeout(timeout); // Cancel the timer if the user starts speaking again
+        }
+
+        recognition.onspeechend = function () {
+            // Start a 5-second timer when the user stops speaking
+            timeout = setTimeout(() => {
+                recognition.abort(); // Stop recognition when the timer completes
+                micButton.classList.remove('active');
+                let newImageUrl = chrome.runtime.getURL("./src/assets/mic.png");
+                micButton.style.backgroundImage = `url('${newImageUrl}')`;
+                textArea.focus();
+            }, 3000); // 3000ms = 3s
+
+            // Create a new SpeechRecognition instance and start it
+            let newRecognition = new webkitSpeechRecognition();
+            newRecognition.lang = 'en-US';
+            newRecognition.interimResults = true;
+            setupRecognition(newRecognition);
+            newRecognition.start();
+        }
+
+        recognition.onresult = function (event) {
+            let transcript = event.results[0][0].transcript;
+            textArea.value = transcript;
+        }
     }
 
-    recognition.onspeechstart = function () {
-        clearTimeout(timeout);
-    }
-
-    recognition.onspeechend = function () {
-        // Create and dispatch an input event
-        const inputEvent = new Event('input', { bubbles: true });
-        textArea.dispatchEvent(inputEvent);
-        micButton.classList.remove('active');
-        let newImageUrl = chrome.runtime.getURL("./src/assets/mic.png");
-        micButton.style.backgroundImage = `url('${newImageUrl}')`;
-        textArea.focus();
-    }
-
-    recognition.onresult = function (event) {
-        let transcript = event.results[0][0].transcript;
-        textArea.value = transcript;
-    }
-
+    setupRecognition(recognition);
     recognition.start();
 
     // Stop the recognition when the mic button is clicked while active
     micButton.onclick = () => {
         if (micButton.classList.contains('active')) {
-            recognition.stop();
+            recognition.abort();
             clearTimeout(timeout);  // Clear the timeout
             micButton.classList.remove('active');  // Remove 'active' class
             let newImageUrl = chrome.runtime.getURL("./src/assets/mic.png");
@@ -47,6 +57,8 @@ function startSpeechRecognition(micButton) {
         }
     };
 }
+
+
 
 // Creates and returns a mic button
 function createMicButton() {
