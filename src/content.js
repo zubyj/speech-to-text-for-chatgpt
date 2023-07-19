@@ -15,11 +15,27 @@ function startSpeechRecognition(micButton) {
         }
 
         recognition.onspeechstart = function () {
-            clearTimeout(timeout); // Cancel the timer if the user starts speaking again
+
         }
 
         // Update the textarea with the latest interim transcript
         recognition.onresult = function (event) {
+            clearTimeout(timeout); // Cancel the timer if the user starts speaking again
+            timeout = setTimeout(() => {
+                console.log('timeout');
+                recognition.abort(); // Stop recognition when the timer completes
+                micButton.classList.remove('active');
+                let newImageUrl = chrome.runtime.getURL("./src/assets/mic.png");
+                micButton.style.backgroundImage = `url('${newImageUrl}')`;
+                textArea.focus();
+                // dispatch event
+                let event = new Event('input', {
+                    bubbles: true,
+                    cancelable: true,
+                });
+                textArea.dispatchEvent(event);
+            }, 3000); // 3000ms = 3s
+
             currSpeech = '';
             for (var i = 0; i < event.results.length; i++) {
                 for (var j = 0; j < event.results[i].length; j++) {
@@ -27,24 +43,6 @@ function startSpeechRecognition(micButton) {
                 }
             }
             textArea.value = currSpeech;
-        }
-
-        recognition.onspeechend = function () {
-            // Start a 3-second timer when the user stops speaking
-            timeout = setTimeout(() => {
-                recognition.abort(); // Stop recognition when the timer completes
-                micButton.classList.remove('active');
-                let newImageUrl = chrome.runtime.getURL("./src/assets/mic.png");
-                micButton.style.backgroundImage = `url('${newImageUrl}')`;
-                textArea.focus();
-            }, 3000); // 3000ms = 3s
-
-            // Create a new SpeechRecognition instance and start it
-            let newRecognition = new webkitSpeechRecognition();
-            newRecognition.lang = 'en-US';
-            newRecognition.interimResults = true;
-            setupRecognition(newRecognition);
-            newRecognition.start();
         }
     }
 
