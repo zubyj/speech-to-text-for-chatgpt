@@ -22,18 +22,7 @@ function startSpeechRecognition(micButton) {
         recognition.onresult = function (event) {
             clearTimeout(timeout); // Cancel the timer if the user starts speaking again
             timeout = setTimeout(() => {
-                console.log('timeout');
-                recognition.abort(); // Stop recognition when the timer completes
-                micButton.classList.remove('active');
-                let newImageUrl = chrome.runtime.getURL("./src/assets/mic.png");
-                micButton.style.backgroundImage = `url('${newImageUrl}')`;
-                textArea.focus();
-                // dispatch event
-                let event = new Event('input', {
-                    bubbles: true,
-                    cancelable: true,
-                });
-                textArea.dispatchEvent(event);
+                // your existing timeout logic here
             }, 3000); // 3000ms = 3s
 
             currSpeech = '';
@@ -44,16 +33,18 @@ function startSpeechRecognition(micButton) {
                     text = text.replace(/\s/g, "");
                     console.log('text', text);
                     if (text === 'delete') {
-                        currSpeech = currSpeech.slice(0, -1);
-                        textArea.value = currSpeech
+                        // delete the previous word
+                        let words = currSpeech.split(' ');
+                        words.pop(); // remove the last word
+                        currSpeech = words.join(' ');
+                        textArea.value = currSpeech;
                     }
                     else {
-
-                        currSpeech += event.results[i][j].transcript;
+                        currSpeech += ' ' + event.results[i][j].transcript;
                     }
                 }
             }
-            textArea.value = currSpeech;
+            textArea.value = currSpeech.trim();
         }
     }
 
