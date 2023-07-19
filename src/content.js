@@ -37,9 +37,20 @@ function startSpeechRecognition(micButton) {
             }, 3000); // 3000ms = 3s
 
             currSpeech = '';
+
             for (var i = 0; i < event.results.length; i++) {
                 for (var j = 0; j < event.results[i].length; j++) {
-                    currSpeech += event.results[i][j].transcript;
+                    let text = event.results[i][j].transcript;
+                    text = text.replace(/\s/g, "");
+                    console.log('text', text);
+                    if (text === 'delete') {
+                        currSpeech = currSpeech.slice(0, -1);
+                        textArea.value = currSpeech
+                    }
+                    else {
+
+                        currSpeech += event.results[i][j].transcript;
+                    }
                 }
             }
             textArea.value = currSpeech;
