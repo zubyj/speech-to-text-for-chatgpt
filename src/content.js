@@ -1,3 +1,5 @@
+let prevText = '';
+
 function startSpeechRecognition(micButton) {
     let textArea = document.getElementById('prompt-textarea');
     let recognition = new webkitSpeechRecognition();
@@ -6,45 +8,36 @@ function startSpeechRecognition(micButton) {
     recognition.continuous = true;
     let timeout;
 
+
     function setupRecognition(recognition) {
         recognition.onstart = function () {
             let newImageUrl = chrome.runtime.getURL("/src/assets/mic-active.png");
             micButton.style.backgroundImage = `url('${newImageUrl}')`;
             micButton.classList.add('active');
             currSpeech = '';
-        }
-
-        recognition.onspeechstart = function () {
-
+            prevText = textArea.value;
         }
 
         // Update the textarea with the latest interim transcript
         recognition.onresult = function (event) {
             clearTimeout(timeout); // Cancel the timer if the user starts speaking again
             timeout = setTimeout(() => {
-                // your existing timeout logic here
+                recognition.stop();
+                micButton.classList.remove('active');
+                let newImageUrl = chrome.runtime.getURL("./src/assets/mic.png");
+                micButton.style.backgroundImage = `url('${newImageUrl}')`;
+                textArea.focus();
             }, 3000); // 3000ms = 3s
 
             currSpeech = '';
 
             for (var i = 0; i < event.results.length; i++) {
                 for (var j = 0; j < event.results[i].length; j++) {
-                    let text = event.results[i][j].transcript;
-                    text = text.replace(/\s/g, "");
-                    console.log('text', text);
-                    if (text === 'delete') {
-                        // delete the previous word
-                        let words = currSpeech.split(' ');
-                        words.pop(); // remove the last word
-                        currSpeech = words.join(' ');
-                        textArea.value = currSpeech;
-                    }
-                    else {
-                        currSpeech += event.results[i][j].transcript;
-                    }
+                    currSpeech += event.results[i][j].transcript;
                 }
             }
-            textArea.value = currSpeech.trim();
+            textArea.value = prevText + currSpeech;
+            textArea.dispatchEvent(new Event('input', { bubbles: true }));
         }
     }
 
@@ -59,7 +52,9 @@ function startSpeechRecognition(micButton) {
             micButton.classList.remove('active');
             let newImageUrl = chrome.runtime.getURL("./src/assets/mic.png");
             micButton.style.backgroundImage = `url('${newImageUrl}')`;
+            textArea.focus();
         } else {
+            // clear the dispatch event
             startSpeechRecognition(micButton);
         }
     };
