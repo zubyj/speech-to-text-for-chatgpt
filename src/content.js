@@ -7,6 +7,7 @@ function startSpeechRecognition(micButton) {
     recognition.interimResults = true;
     recognition.continuous = true;
     let timeout;
+    let micActive = false;  // variable to track whether the mic is active
 
 
     function setupRecognition(recognition) {
@@ -16,6 +17,8 @@ function startSpeechRecognition(micButton) {
             micButton.classList.add('active');
             currSpeech = '';
             prevText = textArea.value;
+            micActive = true;  // set micActive to true
+
         }
 
         // Update the textarea with the latest interim transcript
@@ -27,6 +30,7 @@ function startSpeechRecognition(micButton) {
                 let newImageUrl = chrome.runtime.getURL("./src/assets/mic.png");
                 micButton.style.backgroundImage = `url('${newImageUrl}')`;
                 textArea.focus();
+                micActive = false;  // set micActive to false
             }, 3000); // 3000ms = 3s
 
             currSpeech = '';
@@ -37,7 +41,11 @@ function startSpeechRecognition(micButton) {
                 }
             }
             textArea.value = prevText + currSpeech;
+
+            let button = document.querySelectorAll('button.absolute.p-1')[0];
+            console.log(button);
             textArea.dispatchEvent(new Event('input', { bubbles: true }));
+
         }
     }
 
@@ -110,7 +118,6 @@ chrome.runtime.onMessage.addListener((request) => {
             wrapperDiv.appendChild(textArea);
             parentElement.appendChild(wrapperDiv);
             textArea.focus();
-
-        }, 500);
+        }, 100);
     }
 });
