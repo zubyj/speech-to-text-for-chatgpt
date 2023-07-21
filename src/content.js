@@ -40,7 +40,7 @@ function startSpeechRecognition(micButton) {
                         textArea.value = currSpeech;
                     }
                     else {
-                        currSpeech += ' ' + event.results[i][j].transcript;
+                        currSpeech += event.results[i][j].transcript;
                     }
                 }
             }
