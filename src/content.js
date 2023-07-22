@@ -98,21 +98,18 @@ async function main() {
         if (!shortcutPressed) {
             return;
         }
-        // use switch statement
-        event.preventDefault();
-
         const key = event.key.toLowerCase();
-        if (key === 'm') {
+        if (shortcutPressed && key === 'm') {
+            event.preventDefault();
             micButton.click();
         }
-        else if (key === 'd') {
+        else if (shortcutPressed && key === 'd') {
+            event.preventDefault();
             prevText = '';
             textArea.value = '';
             if (micButton.classList.contains('active')) {
                 micButton.click();
-                micButton.click();
             }
-
         }
     });
 }
