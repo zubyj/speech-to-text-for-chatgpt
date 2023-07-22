@@ -93,7 +93,7 @@ async function main() {
         return;
     }
 
-
+    // Load the CSS for the mic button
     try {
         const response = await fetch(chrome.runtime.getURL('./src/assets/styles.css'));
         const data = await response.text();
@@ -119,7 +119,7 @@ async function main() {
     //     micButton.style.display = 'inline-block'; // Show the mic button
     // });
 
-    // Move the mic button and text area to a wrapper div
+    // Display the mic button at the start of the textarea  
     let parentElement = textArea.parentElement;
     let wrapperDiv = document.createElement('div');
     wrapperDiv.classList.add('wrapper-div');
