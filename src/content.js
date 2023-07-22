@@ -1,5 +1,6 @@
-let prevText = '';
+let prevText = ' ';
 
+// This variable is used to prevent the textarea from being updated
 function startSpeechRecognition(micButton) {
     let textArea = document.getElementById('prompt-textarea');
     let recognition = new webkitSpeechRecognition();
@@ -7,8 +8,6 @@ function startSpeechRecognition(micButton) {
     recognition.interimResults = true;
     recognition.continuous = true;
     let timeout;
-    let micActive = false;  // variable to track whether the mic is active
-
 
     function setupRecognition(recognition) {
         recognition.onstart = function () {
@@ -17,8 +16,7 @@ function startSpeechRecognition(micButton) {
             micButton.classList.add('active');
             currSpeech = '';
             prevText = textArea.value;
-            micActive = true;  // set micActive to true
-
+            micActive = true;
         }
 
         // Update the textarea with the latest interim transcript
@@ -43,9 +41,9 @@ function startSpeechRecognition(micButton) {
             textArea.value = prevText + currSpeech;
 
             let button = document.querySelectorAll('button.absolute.p-1')[0];
-            console.log(button);
-            textArea.dispatchEvent(new Event('input', { bubbles: true }));
+            // console.log(button);
 
+            textArea.dispatchEvent(new Event('input', { bubbles: true }));
         }
     }
 
@@ -53,7 +51,8 @@ function startSpeechRecognition(micButton) {
     recognition.start();
 
     // Stop the recognition when the mic button is clicked while active
-    micButton.onclick = () => {
+    micButton.onclick = (e) => {
+        e.preventDefault();
         if (micButton.classList.contains('active')) {
             recognition.abort();
             clearTimeout(timeout);
@@ -62,7 +61,6 @@ function startSpeechRecognition(micButton) {
             micButton.style.backgroundImage = `url('${newImageUrl}')`;
             textArea.focus();
         } else {
-            // clear the dispatch event
             startSpeechRecognition(micButton);
         }
     };
@@ -92,6 +90,8 @@ async function main() {
     if (!textArea) {
         return;
     }
+    let submitButton = textArea.parentNode.querySelector('button');
+    console.log(submitButton.disabled);
 
     // Load the CSS for the mic button
     try {
@@ -110,14 +110,6 @@ async function main() {
             micButton.style.display = 'inline-block'; // Show the mic button
         }
     });
-
-    // // Get the submit button
-    // const chat = document.querySelector('textarea[tabindex="0"]');
-    // const submitButton = chat.parentNode.querySelector('button:nth-child(2)');
-    // // Turn off speech recognition when submit button is clicked
-    // submitButton.addEventListener('click', () => {
-    //     micButton.style.display = 'inline-block'; // Show the mic button
-    // });
 
     // Display the mic button at the start of the textarea  
     let parentElement = textArea.parentElement;
