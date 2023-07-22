@@ -99,14 +99,27 @@ async function main() {
             return;
         }
         const key = event.key.toLowerCase();
-        if (shortcutPressed && key === 'm') {
+        if (!shortcutPressed) {
+            return;
+        }
+        if (key === 'm') {
             event.preventDefault();
             micButton.click();
         }
-        else if (shortcutPressed && key === 'd') {
+        else if (key === 'd') {
             event.preventDefault();
             prevText = '';
             textArea.value = '';
+            // stop the speech recognition if it is active
+            if (micButton.classList.contains('active')) {
+                micButton.click();
+            }
+        }
+        else if (key === 'b') {
+            event.preventDefault();
+            let textValue = textArea.value.split(' ');
+            textValue = textValue.slice(0, textValue.length - 1);
+            textArea.value = textValue.join(' ');
             if (micButton.classList.contains('active')) {
                 micButton.click();
             }
