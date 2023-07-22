@@ -1,14 +1,20 @@
+/*
+    This file is injected into the ChatGPT website.
+    It is responsible for creating the mic button and handling the speech recognition.
+*/
 async function main() {
+    // If the text area doesn't exist, then we aren't on the ChatGPT website
     let textArea = document.getElementById('prompt-textarea');
     if (!textArea) {
         return;
     }
 
-    // Create the mic button and append it to the text area
+    // If the mic button already exists, dont do anything.
     let micButton = document.getElementById('mic-button');
     if (micButton) {
         return;
     }
+    // Else, create the mic button and append it to the text area
     micButton = document.createElement('button');
     micButton.id = 'mic-button';
     let imageUrl = chrome.runtime.getURL("./src/assets/mic.png");
@@ -27,7 +33,7 @@ async function main() {
         }
     };
 
-    let prevText = '';
+    let prevText = ''; // Avoids overwriting existing text in the textarea.
 
     function startSpeechRecognition(recognition) {
         recognition.lang = 'en-US';
@@ -89,9 +95,24 @@ async function main() {
     document.addEventListener('keydown', (event) => {
         const isMac = navigator.userAgent.includes('Mac');
         const shortcutPressed = isMac ? event.metaKey : event.ctrlKey;
-        if (shortcutPressed && event.key.toLowerCase() === 'm') {
-            event.preventDefault();
+        if (!shortcutPressed) {
+            return;
+        }
+        // use switch statement
+        event.preventDefault();
+
+        const key = event.key.toLowerCase();
+        if (key === 'm') {
             micButton.click();
+        }
+        else if (key === 'd') {
+            prevText = '';
+            textArea.value = '';
+            if (micButton.classList.contains('active')) {
+                micButton.click();
+                micButton.click();
+            }
+
         }
     });
 }
