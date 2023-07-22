@@ -39,10 +39,6 @@ function startSpeechRecognition(micButton) {
                 }
             }
             textArea.value = prevText + currSpeech;
-
-            let button = document.querySelectorAll('button.absolute.p-1')[0];
-            // console.log(button);
-
             textArea.dispatchEvent(new Event('input', { bubbles: true }));
         }
     }
@@ -90,8 +86,6 @@ async function main() {
     if (!textArea) {
         return;
     }
-    let submitButton = textArea.parentNode.querySelector('button');
-    console.log(submitButton.disabled);
 
     // Load the CSS for the mic button
     try {
