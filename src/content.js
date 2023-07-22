@@ -1,4 +1,4 @@
-let prevText = ' ';
+let prevText = '';
 
 // This variable is used to prevent the textarea from being updated
 function startSpeechRecognition(micButton) {
@@ -15,7 +15,7 @@ function startSpeechRecognition(micButton) {
             micButton.style.backgroundImage = `url('${newImageUrl}')`;
             micButton.classList.add('active');
             currSpeech = '';
-            prevText = textArea.value;
+            prevText = textArea.value + ' ';
             micActive = true;
         }
 
