@@ -1,38 +1,58 @@
-let prevText = '';
-
-// This variable is used to prevent the textarea from being updated
-function startSpeechRecognition(micButton) {
+async function main() {
     let textArea = document.getElementById('prompt-textarea');
-    let recognition = new webkitSpeechRecognition();
-    recognition.lang = 'en-US';
-    recognition.interimResults = true;
-    recognition.continuous = true;
-    let timeout;
+    if (!textArea) {
+        return;
+    }
 
-    function setupRecognition(recognition) {
+    // Create the mic button and append it to the text area
+    let micButton = document.getElementById('mic-button');
+    if (micButton) {
+        return;
+    }
+    micButton = document.createElement('button');
+    micButton.id = 'mic-button';
+    let imageUrl = chrome.runtime.getURL("./src/assets/mic.png");
+    micButton.style.backgroundImage = `url('${imageUrl}')`;
+    micButton.onclick = (e) => {
+        e.preventDefault();
+        if (micButton.classList.contains('active')) {
+            recognition.stop();  // Use stop() instead of abort()
+            clearTimeout(timeout);
+            micButton.classList.remove('active');
+            let newImageUrl = chrome.runtime.getURL("./src/assets/mic.png");
+            micButton.style.backgroundImage = `url('${newImageUrl}')`;
+            textArea.focus();
+        } else {
+            startSpeechRecognition(recognition);
+        }
+    };
+
+    let prevText = '';
+
+    function startSpeechRecognition(recognition) {
+        recognition.lang = 'en-US';
+        recognition.interimResults = true;
+        recognition.continuous = true;
+
         recognition.onstart = function () {
             let newImageUrl = chrome.runtime.getURL("/src/assets/mic-active.png");
             micButton.style.backgroundImage = `url('${newImageUrl}')`;
             micButton.classList.add('active');
-            currSpeech = '';
             prevText = textArea.value + ' ';
             micActive = true;
         }
 
-        // Update the textarea with the latest interim transcript
         recognition.onresult = function (event) {
-            clearTimeout(timeout); // Cancel the timer if the user starts speaking again
+            clearTimeout(timeout);
             timeout = setTimeout(() => {
                 recognition.stop();
                 micButton.classList.remove('active');
                 let newImageUrl = chrome.runtime.getURL("./src/assets/mic.png");
                 micButton.style.backgroundImage = `url('${newImageUrl}')`;
                 textArea.focus();
-                micActive = false;  // set micActive to false
-            }, 3000); // 3000ms = 3s
+            }, 3000);
 
-            currSpeech = '';
-
+            let currSpeech = '';
             for (var i = 0; i < event.results.length; i++) {
                 for (var j = 0; j < event.results[i].length; j++) {
                     currSpeech += event.results[i][j].transcript;
@@ -41,53 +61,12 @@ function startSpeechRecognition(micButton) {
             textArea.value = prevText + currSpeech;
             textArea.dispatchEvent(new Event('input', { bubbles: true }));
         }
+        recognition.start();
     }
 
-    setupRecognition(recognition);
-    recognition.start();
+    let recognition = new webkitSpeechRecognition();
+    let timeout;
 
-    // Stop the recognition when the mic button is clicked while active
-    micButton.onclick = (e) => {
-        e.preventDefault();
-        if (micButton.classList.contains('active')) {
-            recognition.abort();
-            clearTimeout(timeout);
-            micButton.classList.remove('active');
-            let newImageUrl = chrome.runtime.getURL("./src/assets/mic.png");
-            micButton.style.backgroundImage = `url('${newImageUrl}')`;
-            textArea.focus();
-        } else {
-            startSpeechRecognition(micButton);
-        }
-    };
-}
-
-// Creates and returns a mic button
-function createMicButton() {
-    let micButton = document.createElement('button');
-    micButton.id = 'mic-button';
-    let imageUrl = chrome.runtime.getURL("./src/assets/mic.png");
-    micButton.style.backgroundImage = `url('${imageUrl}')`;
-    micButton.onclick = () => startSpeechRecognition(micButton);
-    return micButton;
-}
-
-
-async function main() {
-    // If the mic button already exists, don't do anything
-    let micButton = document.getElementById('mic-button');
-    if (micButton) {
-        return;
-    }
-    micButton = createMicButton();
-
-    // If the textArea doesnt exist, dont do anything 
-    let textArea = document.getElementById('prompt-textarea');
-    if (!textArea) {
-        return;
-    }
-
-    // Load the CSS for the mic button
     try {
         const response = await fetch(chrome.runtime.getURL('./src/assets/styles.css'));
         const data = await response.text();
@@ -98,14 +77,6 @@ async function main() {
         console.error('Error fetching CSS file:', error);
     }
 
-    // Turn off speech recognition on enter (but not shift + enter)
-    textArea.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            micButton.style.display = 'inline-block'; // Show the mic button
-        }
-    });
-
-    // Display the mic button at the start of the textarea  
     let parentElement = textArea.parentElement;
     let wrapperDiv = document.createElement('div');
     wrapperDiv.classList.add('wrapper-div');
@@ -114,6 +85,15 @@ async function main() {
     wrapperDiv.appendChild(textArea);
     parentElement.appendChild(wrapperDiv);
     textArea.focus();
+
+    document.addEventListener('keydown', (event) => {
+        const isMac = navigator.userAgent.includes('Mac');
+        const shortcutPressed = isMac ? event.metaKey : event.ctrlKey;
+        if (shortcutPressed && event.key.toLowerCase() === 'm') {
+            event.preventDefault();
+            micButton.click();
+        }
+    });
 }
 
 main();
