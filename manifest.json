@@ -1,16 +1,13 @@
 {
     "manifest_version": 3,
     "name": "Speech to Text for ChatGPT",
-    "version": "0.0.1",
-    "description": "Adds a speech to text microphone button to the ChatGPT website.",
+    "version": "0.0.2",
+    "description": "Adds a speech to text microphone to the ChatGPT website.",
     "icons": {
         "16": "src/assets/icons/icon-16.png",
         "32": "src/assets/icons/icon-32.png",
         "48": "src/assets/icons/icon-48.png",
         "128": "src/assets/icons/icon-128.png"
-    },
-    "background": {
-        "service_worker": "src/background.js"
     },
     "content_scripts": [
         {
@@ -33,8 +30,5 @@
                 "https://chat.openai.com/*"
             ]
         }
-    ],
-    "permissions": [
-        "tabs"
     ]
 }
