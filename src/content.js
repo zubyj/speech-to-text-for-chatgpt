@@ -116,13 +116,13 @@ async function main() {
             }
         }
         else if (key === 'b') {
+            if (micButton.classList.contains('active')) {
+                micButton.click();
+            }
             event.preventDefault();
             let textValue = textArea.value.split(' ');
             textValue = textValue.slice(0, textValue.length - 1);
             textArea.value = textValue.join(' ');
-            if (micButton.classList.contains('active')) {
-                micButton.click();
-            }
         }
     });
 }
