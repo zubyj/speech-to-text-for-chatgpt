@@ -4,27 +4,27 @@
     "version": "0.0.2",
     "description": "Adds a speech to text microphone to the ChatGPT website.",
     "icons": {
-        "16": "src/assets/icons/icon-16.png",
-        "32": "src/assets/icons/icon-32.png",
-        "48": "src/assets/icons/icon-48.png",
-        "128": "src/assets/icons/icon-128.png"
+        "16": "assets/icons/icon-16.png",
+        "32": "assets/icons/icon-32.png",
+        "48": "assets/icons/icon-48.png",
+        "128": "assets/icons/icon-128.png"
     },
     "content_scripts": [
         {
             "js": [
-                "src/content.js"
+                "content.js"
             ],
             "matches": [
-                "https://chat.openai.com/*"
+                "*://chat.openai.com/*"
             ]
         }
     ],
     "web_accessible_resources": [
         {
             "resources": [
-                "src/assets/mic.png",
-                "src/assets/mic-active.png",
-                "src/assets/styles.css"
+                "assets/mic.png",
+                "assets/mic-active.png",
+                "assets/styles.css"
             ],
             "matches": [
                 "https://chat.openai.com/*"

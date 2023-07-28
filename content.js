@@ -17,7 +17,7 @@ async function main() {
     // Else, create the mic button and append it to the text area
     micButton = document.createElement('button');
     micButton.id = 'mic-button';
-    let imageUrl = chrome.runtime.getURL("./src/assets/mic.png");
+    let imageUrl = chrome.runtime.getURL("./assets/mic.png");
     micButton.style.backgroundImage = `url('${imageUrl}')`;
     micButton.onclick = (e) => {
         e.preventDefault();
@@ -25,7 +25,7 @@ async function main() {
             recognition.stop();  // Use stop() instead of abort()
             clearTimeout(timeout);
             micButton.classList.remove('active');
-            let newImageUrl = chrome.runtime.getURL("./src/assets/mic.png");
+            let newImageUrl = chrome.runtime.getURL("./assets/mic.png");
             micButton.style.backgroundImage = `url('${newImageUrl}')`;
             textArea.focus();
         } else {
@@ -41,7 +41,7 @@ async function main() {
         recognition.continuous = true;
 
         recognition.onstart = function () {
-            let newImageUrl = chrome.runtime.getURL("/src/assets/mic-active.png");
+            let newImageUrl = chrome.runtime.getURL("/assets/mic-active.png");
             micButton.style.backgroundImage = `url('${newImageUrl}')`;
             micButton.classList.add('active');
             prevText = textArea.value + ' ';
@@ -53,7 +53,7 @@ async function main() {
             timeout = setTimeout(() => {
                 recognition.stop();
                 micButton.classList.remove('active');
-                let newImageUrl = chrome.runtime.getURL("./src/assets/mic.png");
+                let newImageUrl = chrome.runtime.getURL("./assets/mic.png");
                 micButton.style.backgroundImage = `url('${newImageUrl}')`;
                 textArea.focus();
             }, 3000);
@@ -74,7 +74,7 @@ async function main() {
     let timeout;
 
     try {
-        const response = await fetch(chrome.runtime.getURL('./src/assets/styles.css'));
+        const response = await fetch(chrome.runtime.getURL('./assets/styles.css'));
         const data = await response.text();
         let style = document.createElement('style');
         style.innerHTML = data;
