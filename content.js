@@ -193,13 +193,6 @@ function attachKeyboardShortcuts(textArea, micButton, prevText) {
  */
 function handleKeyboardShortcut(key, micButton, textArea, prevText, event) {
     switch (key) {
-        case 'enter':
-            if (micButton.classList.contains('active')) {
-                event.preventDefault();
-                micButton.click();
-                prevText = '';
-            }
-            break;
         case 'm':
             event.preventDefault();
             micButton.click();
