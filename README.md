@@ -1,18 +1,23 @@
 # Speech to Text for ChatGPT
+[Open in the Chrome Web Store](https://chrome.google.com/webstore/detail/speech-to-text-for-chatgp/kplchkeabimhnpklakhhocnhegidpcel?hl=en&authuser=1)
 
-This Chrome extension adds a speech-to-text microphone into the ChatGPT website, providing a hands-free chatting experience.
+A browser extension that adds a speech to text microphone to the ChatGPT website.
 
 ## Features
 1. **Speech to text conversion**: Click the microphone button to start converting your spoken words into text input.
-2. **Visual feedback**: The microphone icon changes to indicate when it's actively listening.
-3. **Keyboard shortcuts**: Keyboard shortcuts are available for starting/stopping speech recognition, and clearing the input.
+2. **Keyboard shortcuts**: Keyboard shortcuts are available for starting/stopping speech recognition, and clearing the input.
 
 ## Installation
+Download it in the [Chrome Web Store](https://chrome.google.com/webstore/detail/speech-to-text-for-chatgp/kplchkeabimhnpklakhhocnhegidpcel?hl=en&authuser=1)
+
+OR
+
 1. Download or clone this repository.
-2. Open the Extension Management page by navigating to chrome://extensions.
+2. Navigate to chrome://extensions.
    - Alternatively, open this page by clicking on the Chrome menu, hovering over More Tools, and selecting Extensions.
 3. Enable Developer Mode by clicking the toggle switch next to Developer mode.
 4. Click the Load unpacked button and select the downloaded directory.
+5. Open chat.openai.com and press Cmd+M to get started!
 
 ## How to use
 - Click the microphone button in the input field to start converting your spoken words into text.
