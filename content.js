@@ -1,80 +1,146 @@
-/*
-    This file is injected into the ChatGPT website.
-    It is responsible for creating the mic button and handling the speech recognition.
-*/
+let recognition;
+let timeout;
+
+/**
+ * Initialize the mic button for the chatbot
+ */
 async function main() {
-    // If the text area doesn't exist, then we aren't on the ChatGPT website
-    let textArea = document.getElementById('prompt-textarea');
-    if (!textArea) {
-        return;
-    }
+    const textArea = document.getElementById('prompt-textarea');
+    if (!textArea) return;
 
-    // If the mic button already exists, dont do anything.
     let micButton = document.getElementById('mic-button');
-    if (micButton) {
-        return;
-    }
-    // Else, create the mic button and append it to the text area
-    micButton = document.createElement('button');
+    if (micButton) return;
+
+    micButton = createMicButton(textArea);
+    let prevText = '';
+
+    recognition = initSpeechRecognition(micButton, prevText, textArea);
+    await loadCSSStyles();
+
+    wrapTextAreaWithMicButton(textArea, micButton);
+    attachKeyboardShortcuts(textArea, micButton, prevText);
+
+}
+
+/**
+ * Creates a new mic button and attach its click handler
+ * @param {HTMLTextAreaElement} textArea - The textArea element
+ * @returns {HTMLButtonElement} - The newly created mic button
+ */
+function createMicButton(textArea) {
+    const micButton = document.createElement('button');
     micButton.id = 'mic-button';
-    let imageUrl = chrome.runtime.getURL("./assets/mic.png");
+    const imageUrl = chrome.runtime.getURL("./assets/mic.png");
     micButton.style.backgroundImage = `url('${imageUrl}')`;
-    micButton.onclick = (e) => {
-        e.preventDefault();
-        if (micButton.classList.contains('active')) {
-            recognition.stop();  // Use stop() instead of abort()
-            clearTimeout(timeout);
-            micButton.classList.remove('active');
-            let newImageUrl = chrome.runtime.getURL("./assets/mic.png");
-            micButton.style.backgroundImage = `url('${newImageUrl}')`;
-            textArea.focus();
-        } else {
-            startSpeechRecognition(recognition);
-        }
-    };
+    micButton.onclick = (e) => handleClick(e, micButton, textArea);
+    return micButton;
+}
 
-    let prevText = ''; // Avoids overwriting existing text in the textarea.
+/**
+ * Starts the speech recognition
+ * @param {SpeechRecognition} recognition - The speech recognition object
+ */
+function startSpeechRecognition(recognition) {
+    recognition.start();
+}
 
-    function startSpeechRecognition(recognition) {
-        recognition.lang = 'en-US';
-        recognition.interimResults = true;
-        recognition.continuous = true;
-
-        recognition.onstart = function () {
-            let newImageUrl = chrome.runtime.getURL("/assets/mic-active.png");
-            micButton.style.backgroundImage = `url('${newImageUrl}')`;
-            micButton.classList.add('active');
-            prevText = textArea.value + ' ';
-            micActive = true;
-        }
-
-        recognition.onresult = function (event) {
-            clearTimeout(timeout);
-            timeout = setTimeout(() => {
-                recognition.stop();
-                micButton.classList.remove('active');
-                let newImageUrl = chrome.runtime.getURL("./assets/mic.png");
-                micButton.style.backgroundImage = `url('${newImageUrl}')`;
-                textArea.focus();
-            }, 3000);
-
-            let currSpeech = '';
-            for (var i = 0; i < event.results.length; i++) {
-                for (var j = 0; j < event.results[i].length; j++) {
-                    currSpeech += event.results[i][j].transcript;
-                }
-            }
-            textArea.value = prevText + currSpeech;
-            textArea.dispatchEvent(new Event('input', { bubbles: true }));
-        }
-        recognition.start();
+/**
+ * Handles the click event of the mic button
+ * @param {Event} e - The click event
+ * @param {HTMLButtonElement} micButton - The mic button element
+ * @param {HTMLTextAreaElement} textArea - The textArea element
+ */
+function handleClick(e, micButton, textArea) {
+    e.preventDefault();
+    if (micButton.classList.contains('active')) {
+        stopSpeechRecognition(micButton, textArea);
+    } else {
+        startSpeechRecognition(recognition);
     }
+}
 
-    let recognition = new webkitSpeechRecognition();
-    let timeout;
+/**
+ * Initializes the Speech Recognition object
+ * @param {HTMLButtonElement} micButton - The mic button element
+ * @param {string} prevText - The previous text in the textArea
+ * @param {HTMLTextAreaElement} textArea - The textArea element
+ * @returns {SpeechRecognition} - The speech recognition object
+ */
+function initSpeechRecognition(micButton, prevText, textArea) {
+    recognition = new webkitSpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.interimResults = true;
+    recognition.continuous = true;
 
+    recognition.onstart = () => handleRecognitionStart(micButton, textArea, prevText);
+    recognition.onresult = (event) => handleRecognitionResult(event, micButton, textArea, prevText);
+    recognition.onerror = (error) => console.error('Speech recognition error:', error);
+    return recognition;
+}
+
+/**
+ * Handles the start event of the speech recognition
+ * @param {HTMLButtonElement} micButton - The mic button element
+ * @param {HTMLTextAreaElement} textArea - The textArea element
+ * @param {string} prevText - The previous text in the textArea
+ */
+function handleRecognitionStart(micButton, textArea, prevText) {
+
+
+    let newImageUrl = chrome.runtime.getURL("/assets/mic-active.png");
+    micButton.style.backgroundImage = `url('${newImageUrl}')`;
+    micButton.classList.add('active');
+    prevText = textArea.value + ' ';
+}
+
+/**
+ * Handles the result event of the speech recognition
+ * @param {Event} event - The recognition result event
+ * @param {HTMLButtonElement} micButton - The mic button element
+ * @param {HTMLTextAreaElement} textArea - The textArea element
+ * @param {string} prevText - The previous text in the textArea
+ */
+function handleRecognitionResult(event, micButton, textArea, prevText) {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => {
+        recognition.stop();
+        micButton.classList.remove('active');
+        let newImageUrl = chrome.runtime.getURL("./assets/mic.png");
+        micButton.style.backgroundImage = `url('${newImageUrl}')`;
+        textArea.focus();
+    }, 3000);
+
+    let currSpeech = '';
+    for (let i = 0; i < event.results.length; i++) {
+        for (let j = 0; j < event.results[i].length; j++) {
+            currSpeech += event.results[i][j].transcript;
+        }
+    }
+    textArea.value = prevText + currSpeech;
+    textArea.dispatchEvent(new Event('input', { bubbles: true }));
+}
+
+/**
+ * Stops the speech recognition
+ * @param {HTMLButtonElement} micButton - The mic button element
+ * @param {HTMLTextAreaElement} textArea - The textArea element
+ */
+function stopSpeechRecognition(micButton, textArea) {
+    recognition.stop();
+    clearTimeout(timeout);
+    micButton.classList.remove('active');
+    const newImageUrl = chrome.runtime.getURL("./assets/mic.png");
+    micButton.style.backgroundImage = `url('${newImageUrl}')`;
+    textArea.focus();
+}
+
+/**
+ * Loads the CSS styles for the mic button
+ */
+async function loadCSSStyles() {
     try {
         const response = await fetch(chrome.runtime.getURL('./assets/styles.css'));
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const data = await response.text();
         let style = document.createElement('style');
         style.innerHTML = data;
@@ -82,40 +148,71 @@ async function main() {
     } catch (error) {
         console.error('Error fetching CSS file:', error);
     }
+}
 
-    let parentElement = textArea.parentElement;
-    let wrapperDiv = document.createElement('div');
+/**
+ * Wraps the textArea with the mic button
+ * @param {HTMLTextAreaElement} textArea - The textArea element
+ * @param {HTMLButtonElement} micButton - The mic button element
+ */
+function wrapTextAreaWithMicButton(textArea, micButton) {
+    const parentElement = textArea.parentElement;
+    const wrapperDiv = document.createElement('div');
     wrapperDiv.classList.add('wrapper-div');
     parentElement.removeChild(textArea);
     wrapperDiv.appendChild(micButton);
     wrapperDiv.appendChild(textArea);
     parentElement.appendChild(wrapperDiv);
     textArea.focus();
+}
 
+/**
+ * Attaches keyboard shortcuts for the chatbot
+ * @param {HTMLTextAreaElement} textArea - The textArea element
+ * @param {HTMLButtonElement} micButton - The mic button element
+ * @param {string} prevText - The previous text in the textArea
+ */
+function attachKeyboardShortcuts(textArea, micButton, prevText) {
     document.addEventListener('keydown', (event) => {
         const isMac = navigator.userAgent.includes('Mac');
         const shortcutPressed = isMac ? event.metaKey : event.ctrlKey;
-        if (!shortcutPressed) {
-            return;
-        }
+        if (!shortcutPressed) return;
+
         const key = event.key.toLowerCase();
-        if (!shortcutPressed) {
-            return;
-        }
-        if (key === 'm') {
+        handleKeyboardShortcut(key, micButton, textArea, prevText, event);
+    });
+}
+
+/**
+ * Handles the keyboard shortcuts for the chatbot
+ * @param {string} key - The key pressed
+ * @param {HTMLButtonElement} micButton - The mic button element
+ * @param {HTMLTextAreaElement} textArea - The textArea element
+ * @param {string} prevText - The previous text in the textArea
+ * @param {Event} event - The keyboard event
+ */
+function handleKeyboardShortcut(key, micButton, textArea, prevText, event) {
+    switch (key) {
+        case 'enter':
+            if (micButton.classList.contains('active')) {
+                event.preventDefault();
+                micButton.click();
+                prevText = '';
+            }
+            break;
+        case 'm':
             event.preventDefault();
             micButton.click();
-        }
-        else if (key === 'd') {
+            break;
+        case 'd':
             event.preventDefault();
             prevText = '';
             textArea.value = '';
-            // stop the speech recognition if it is active
             if (micButton.classList.contains('active')) {
                 micButton.click();
             }
-        }
-        else if (key === 'b') {
+            break;
+        case 'b':
             if (micButton.classList.contains('active')) {
                 micButton.click();
             }
@@ -123,8 +220,10 @@ async function main() {
             let textValue = textArea.value.split(' ');
             textValue = textValue.slice(0, textValue.length - 1);
             textArea.value = textValue.join(' ');
-        }
-    });
+            break;
+        default:
+            return;
+    }
 }
 
 main();
