@@ -1,5 +1,6 @@
 let recognition;
 let prevText = '';
+let lastStopTime = 0;
 // let timeout;
 
 /**
@@ -107,6 +108,9 @@ function handleRecognitionResult(event, micButton, textArea) {
     //     textArea.focus();
     // }, 3000);
 
+    if (Date.now() - lastStopTime < 300) return; // Add this line
+
+
     let currSpeech = '';
     for (let i = 0; i < event.results.length; i++) {
         for (let j = 0; j < event.results[i].length; j++) {
@@ -124,6 +128,7 @@ function handleRecognitionResult(event, micButton, textArea) {
  */
 function stopSpeechRecognition(micButton, textArea) {
     recognition.stop();
+    lastStopTime = Date.now(); // Add this line
     // clearTimeout(timeout);
     micButton.classList.remove('active');
     const newImageUrl = chrome.runtime.getURL("./assets/mic.png");
