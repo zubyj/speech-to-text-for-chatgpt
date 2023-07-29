@@ -162,6 +162,17 @@ function wrapTextAreaWithMicButton(textArea, micButton) {
  */
 function attachKeyboardShortcuts(textArea, micButton) {
     document.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+            let micOn = micButton.classList.contains('active');
+            event.preventDefault();
+            if (micOn) micButton.click();
+            if (micOn) {
+                setTimeout(() => {
+                    micButton.click();
+                }, 800)
+            }
+        }
+
         const isMac = navigator.userAgent.includes('Mac');
         const shortcutPressed = isMac ? event.metaKey : event.ctrlKey;
         if (!shortcutPressed) return;
