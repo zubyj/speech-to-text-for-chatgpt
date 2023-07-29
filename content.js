@@ -84,8 +84,6 @@ function initSpeechRecognition(micButton, textArea) {
  * @param {HTMLTextAreaElement} textArea - The textArea element
  */
 function handleRecognitionStart(micButton, textArea) {
-
-
     let newImageUrl = chrome.runtime.getURL("/assets/mic-active.png");
     micButton.style.backgroundImage = `url('${newImageUrl}')`;
     micButton.classList.add('active');
@@ -203,6 +201,12 @@ function handleKeyboardShortcut(key, micButton, textArea, event) {
             if (micOn) micButton.click();
             let newText = textArea.value.split(' ').slice(0, -1).join(' ');
             textArea.value = newText;
+            if (micOn) {
+                setTimeout(() => {
+                    micButton.click();
+                }, 800)
+            }
+            break;
 
         default:
             return;
