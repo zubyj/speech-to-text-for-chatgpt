@@ -209,15 +209,13 @@ function handleKeyboardShortcut(key, micButton, textArea, event) {
                 }, 300)
             }
             break;
-        case 'b':
-            // if (micButton.classList.contains('active')) {
-            //     micButton.click();
-            // }
-            event.preventDefault();
-            let textValue = textArea.value.split(' ');
-            textValue = textValue.slice(0, textValue.length - 1);
-            textArea.value = textValue.join(' ');
-            break;
+        // BROKEN
+        // case 'b':
+        //     event.preventDefault();
+        //     let textValue = textArea.value.split(' ');
+        //     textValue = textValue.slice(0, textValue.length - 1);
+        //     textArea.value = textValue.join(' ');
+        //     break;
         default:
             return;
     }
