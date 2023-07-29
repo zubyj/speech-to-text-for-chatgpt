@@ -228,15 +228,11 @@ function handleKeyboardShortcut(key, micButton, textArea, event) {
     }
 }
 
-// Run main function if window size is larger than 1100px
-function checkScreenSize() {
-    if (window.innerWidth >= 1100 && !isMainActive) {
+// Run main function if page is dynamically updated
+function addMicrophone() {
+    if (!isMainActive) {
         main();
         isMainActive = true;
-    }
-    if (window.innerWidth < 1100) {
-        removeMain();
-        isMainActive = false;
     }
 }
 
@@ -270,6 +266,6 @@ function removeMain() {
     if (micButton) micButton.remove();
 }
 
-window.addEventListener('resize', checkScreenSize);
-checkScreenSize();
+window.addEventListener('resize', addMicrophone);
+addMicrophone();
 initObserver();
