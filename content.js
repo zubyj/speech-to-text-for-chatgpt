@@ -1,11 +1,15 @@
 let recognition;
 let prevText = '';
 let lastStopTime = 0;
+let isMainActive = false;
+let isMainRunning = false;
 
 /**
  * Initialize the mic button for the chatbot
  */
 async function main() {
+    isMainRunning = true;
+
     const textArea = document.getElementById('prompt-textarea');
     if (!textArea) return;
 
@@ -20,7 +24,7 @@ async function main() {
     wrapTextAreaWithMicButton(textArea, micButton);
     attachKeyboardShortcuts(textArea, micButton);
 
-
+    isMainRunning = false;
 }
 
 /**
@@ -224,4 +228,48 @@ function handleKeyboardShortcut(key, micButton, textArea, event) {
     }
 }
 
-main();
+// Run main function if window size is larger than 1100px
+function checkScreenSize() {
+    if (window.innerWidth >= 1100 && !isMainActive) {
+        main();
+        isMainActive = true;
+    }
+    if (window.innerWidth < 1100) {
+        removeMain();
+        isMainActive = false;
+    }
+}
+
+// Initialize observer to reload button if it is removed
+function initObserver() {
+    const observer = new MutationObserver(
+        (mutations) => {
+            for (const mutation of mutations) {
+                if (
+                    mutation.type === 'childList' &&
+                    mutation.addedNodes.length > 0 &&
+                    !document.querySelector('#mic-button') &&
+                    !isMainRunning &&
+                    isMainActive
+                ) {
+                    removeMain();
+                    main();
+                }
+            }
+        });
+    observer.observe(document.body, { childList: true, subtree: true });
+}
+
+// Remove main function
+function removeMain() {
+    if (recognition) {
+        recognition.onend = null;
+        recognition.abort();
+    }
+    const micButton = document.querySelector('#mic-button');
+    if (micButton) micButton.remove();
+}
+
+window.addEventListener('resize', checkScreenSize);
+checkScreenSize();
+initObserver();
