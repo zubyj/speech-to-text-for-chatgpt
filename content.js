@@ -194,11 +194,7 @@ function handleKeyboardShortcut(key, micButton, textArea, event) {
             break;
         case 'd':
             event.preventDefault();
-
-            let micOn = false;
-            if (micButton.classList.contains('active')) {
-                micOn = true;
-            }
+            let micOn = micButton.classList.contains('active');
             if (micOn) micButton.click();
             prevText = '';
             textArea.value = '';
