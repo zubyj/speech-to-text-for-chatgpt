@@ -1,5 +1,6 @@
 let recognition;
-let timeout;
+let prevText = '';
+// let timeout;
 
 /**
  * Initialize the mic button for the chatbot
@@ -12,13 +13,12 @@ async function main() {
     if (micButton) return;
 
     micButton = createMicButton(textArea);
-    let prevText = '';
 
-    recognition = initSpeechRecognition(micButton, prevText, textArea);
+    recognition = initSpeechRecognition(micButton, textArea);
     await loadCSSStyles();
 
     wrapTextAreaWithMicButton(textArea, micButton);
-    attachKeyboardShortcuts(textArea, micButton, prevText);
+    attachKeyboardShortcuts(textArea, micButton);
 
 }
 
@@ -62,18 +62,17 @@ function handleClick(e, micButton, textArea) {
 /**
  * Initializes the Speech Recognition object
  * @param {HTMLButtonElement} micButton - The mic button element
- * @param {string} prevText - The previous text in the textArea
  * @param {HTMLTextAreaElement} textArea - The textArea element
  * @returns {SpeechRecognition} - The speech recognition object
  */
-function initSpeechRecognition(micButton, prevText, textArea) {
+function initSpeechRecognition(micButton, textArea) {
     recognition = new webkitSpeechRecognition();
     recognition.lang = 'en-US';
     recognition.interimResults = true;
     recognition.continuous = true;
 
-    recognition.onstart = () => handleRecognitionStart(micButton, textArea, prevText);
-    recognition.onresult = (event) => handleRecognitionResult(event, micButton, textArea, prevText);
+    recognition.onstart = () => handleRecognitionStart(micButton, textArea);
+    recognition.onresult = (event) => handleRecognitionResult(event, micButton, textArea);
     recognition.onerror = (error) => console.error('Speech recognition error:', error);
     return recognition;
 }
@@ -82,9 +81,8 @@ function initSpeechRecognition(micButton, prevText, textArea) {
  * Handles the start event of the speech recognition
  * @param {HTMLButtonElement} micButton - The mic button element
  * @param {HTMLTextAreaElement} textArea - The textArea element
- * @param {string} prevText - The previous text in the textArea
  */
-function handleRecognitionStart(micButton, textArea, prevText) {
+function handleRecognitionStart(micButton, textArea) {
 
 
     let newImageUrl = chrome.runtime.getURL("/assets/mic-active.png");
@@ -98,17 +96,16 @@ function handleRecognitionStart(micButton, textArea, prevText) {
  * @param {Event} event - The recognition result event
  * @param {HTMLButtonElement} micButton - The mic button element
  * @param {HTMLTextAreaElement} textArea - The textArea element
- * @param {string} prevText - The previous text in the textArea
  */
-function handleRecognitionResult(event, micButton, textArea, prevText) {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => {
-        recognition.stop();
-        micButton.classList.remove('active');
-        let newImageUrl = chrome.runtime.getURL("./assets/mic.png");
-        micButton.style.backgroundImage = `url('${newImageUrl}')`;
-        textArea.focus();
-    }, 3000);
+function handleRecognitionResult(event, micButton, textArea) {
+    // clearTimeout(timeout);
+    // timeout = setTimeout(() => {
+    //     recognition.stop();
+    //     micButton.classList.remove('active');
+    //     let newImageUrl = chrome.runtime.getURL("./assets/mic.png");
+    //     micButton.style.backgroundImage = `url('${newImageUrl}')`;
+    //     textArea.focus();
+    // }, 3000);
 
     let currSpeech = '';
     for (let i = 0; i < event.results.length; i++) {
@@ -127,7 +124,7 @@ function handleRecognitionResult(event, micButton, textArea, prevText) {
  */
 function stopSpeechRecognition(micButton, textArea) {
     recognition.stop();
-    clearTimeout(timeout);
+    // clearTimeout(timeout);
     micButton.classList.remove('active');
     const newImageUrl = chrome.runtime.getURL("./assets/mic.png");
     micButton.style.backgroundImage = `url('${newImageUrl}')`;
@@ -170,16 +167,15 @@ function wrapTextAreaWithMicButton(textArea, micButton) {
  * Attaches keyboard shortcuts for the chatbot
  * @param {HTMLTextAreaElement} textArea - The textArea element
  * @param {HTMLButtonElement} micButton - The mic button element
- * @param {string} prevText - The previous text in the textArea
  */
-function attachKeyboardShortcuts(textArea, micButton, prevText) {
+function attachKeyboardShortcuts(textArea, micButton) {
     document.addEventListener('keydown', (event) => {
         const isMac = navigator.userAgent.includes('Mac');
         const shortcutPressed = isMac ? event.metaKey : event.ctrlKey;
         if (!shortcutPressed) return;
 
         const key = event.key.toLowerCase();
-        handleKeyboardShortcut(key, micButton, textArea, prevText, event);
+        handleKeyboardShortcut(key, micButton, textArea, event);
     });
 }
 
@@ -188,10 +184,9 @@ function attachKeyboardShortcuts(textArea, micButton, prevText) {
  * @param {string} key - The key pressed
  * @param {HTMLButtonElement} micButton - The mic button element
  * @param {HTMLTextAreaElement} textArea - The textArea element
- * @param {string} prevText - The previous text in the textArea
  * @param {Event} event - The keyboard event
  */
-function handleKeyboardShortcut(key, micButton, textArea, prevText, event) {
+function handleKeyboardShortcut(key, micButton, textArea, event) {
     switch (key) {
         case 'm':
             event.preventDefault();
@@ -199,16 +194,24 @@ function handleKeyboardShortcut(key, micButton, textArea, prevText, event) {
             break;
         case 'd':
             event.preventDefault();
+
+            let micOn = false;
+            if (micButton.classList.contains('active')) {
+                micOn = true;
+            }
+            if (micOn) micButton.click();
             prevText = '';
             textArea.value = '';
-            if (micButton.classList.contains('active')) {
-                micButton.click();
+            if (micOn) {
+                setTimeout(() => {
+                    micButton.click();
+                }, 300)
             }
             break;
         case 'b':
-            if (micButton.classList.contains('active')) {
-                micButton.click();
-            }
+            // if (micButton.classList.contains('active')) {
+            //     micButton.click();
+            // }
             event.preventDefault();
             let textValue = textArea.value.split(' ');
             textValue = textValue.slice(0, textValue.length - 1);
