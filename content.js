@@ -1,7 +1,6 @@
 let recognition;
 let prevText = '';
 let lastStopTime = 0;
-// let timeout;
 
 /**
  * Initialize the mic button for the chatbot
@@ -20,6 +19,7 @@ async function main() {
 
     wrapTextAreaWithMicButton(textArea, micButton);
     attachKeyboardShortcuts(textArea, micButton);
+
 
 }
 
@@ -99,17 +99,7 @@ function handleRecognitionStart(micButton, textArea) {
  * @param {HTMLTextAreaElement} textArea - The textArea element
  */
 function handleRecognitionResult(event, micButton, textArea) {
-    // clearTimeout(timeout);
-    // timeout = setTimeout(() => {
-    //     recognition.stop();
-    //     micButton.classList.remove('active');
-    //     let newImageUrl = chrome.runtime.getURL("./assets/mic.png");
-    //     micButton.style.backgroundImage = `url('${newImageUrl}')`;
-    //     textArea.focus();
-    // }, 3000);
-
     if (Date.now() - lastStopTime < 300) return; // Add this line
-
 
     let currSpeech = '';
     for (let i = 0; i < event.results.length; i++) {
@@ -129,7 +119,6 @@ function handleRecognitionResult(event, micButton, textArea) {
 function stopSpeechRecognition(micButton, textArea) {
     recognition.stop();
     lastStopTime = Date.now(); // Add this line
-    // clearTimeout(timeout);
     micButton.classList.remove('active');
     const newImageUrl = chrome.runtime.getURL("./assets/mic.png");
     micButton.style.backgroundImage = `url('${newImageUrl}')`;
@@ -192,6 +181,7 @@ function attachKeyboardShortcuts(textArea, micButton) {
  * @param {Event} event - The keyboard event
  */
 function handleKeyboardShortcut(key, micButton, textArea, event) {
+    let micOn = micButton.classList.contains('active');
     switch (key) {
         case 'm':
             event.preventDefault();
@@ -199,7 +189,6 @@ function handleKeyboardShortcut(key, micButton, textArea, event) {
             break;
         case 'd':
             event.preventDefault();
-            let micOn = micButton.classList.contains('active');
             if (micOn) micButton.click();
             prevText = '';
             textArea.value = '';
@@ -209,13 +198,12 @@ function handleKeyboardShortcut(key, micButton, textArea, event) {
                 }, 300)
             }
             break;
-        // BROKEN
-        // case 'b':
-        //     event.preventDefault();
-        //     let textValue = textArea.value.split(' ');
-        //     textValue = textValue.slice(0, textValue.length - 1);
-        //     textArea.value = textValue.join(' ');
-        //     break;
+        case 'b':
+            event.preventDefault();
+            if (micOn) micButton.click();
+            let newText = textArea.value.split(' ').slice(0, -1).join(' ');
+            textArea.value = newText;
+
         default:
             return;
     }
