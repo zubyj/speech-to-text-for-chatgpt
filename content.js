@@ -168,7 +168,6 @@ function attachKeyboardShortcuts(textArea, micButton) {
     document.addEventListener('keydown', (event) => {
         if (event.key === 'Enter') {
             let micOn = micButton.classList.contains('active');
-            event.preventDefault();
             if (micOn) micButton.click();
             if (micOn) {
                 setTimeout(() => {
