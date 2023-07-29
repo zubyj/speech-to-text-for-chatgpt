@@ -2,7 +2,7 @@
     "manifest_version": 3,
     "name": "Speech to Text for ChatGPT",
     "version": "0.0.2",
-    "description": "Adds a speech to text microphone to the ChatGPT website.",
+    "description": "Adds a speech to text microphone into the ChatGPT website.",
     "icons": {
         "16": "assets/icons/icon-16.png",
         "32": "assets/icons/icon-32.png",
@@ -15,7 +15,7 @@
                 "content.js"
             ],
             "matches": [
-                "*://chat.openai.com/*"
+                "https://chat.openai.com/*"
             ]
         }
     ],
