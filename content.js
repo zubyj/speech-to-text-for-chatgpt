@@ -1,136 +1,93 @@
-let recognition;
-let prevText = '';
+let speechRecognition;
+let previousSpeechText = '';
 let lastStopTime = 0;
-let isMainActive = false;
-let isMainRunning = false;
+let isChatbotActive = false;
+let isChatbotRunning = false;
+const MIC_BUTTON_ID = 'mic-button';
 
-/**
- * Initialize the mic button for the chatbot
- */
-async function main() {
-    isMainRunning = true;
+async function initializeChatbot() {
+    isChatbotRunning = true;
 
     const textArea = document.getElementById('prompt-textarea');
     if (!textArea) return;
 
-    let micButton = document.getElementById('mic-button');
+    let micButton = document.getElementById(MIC_BUTTON_ID);
     if (micButton) return;
 
     micButton = createMicButton(textArea);
-
-    recognition = initSpeechRecognition(micButton, textArea);
-    await loadCSSStyles();
+    speechRecognition = initializeSpeechRecognition({ micButton, textArea });
+    await loadMicButtonStyles();
 
     wrapTextAreaWithMicButton(textArea, micButton);
     attachKeyboardShortcuts(textArea, micButton);
 
-    isMainRunning = false;
+    isChatbotRunning = false;
 }
 
-/**
- * Creates a new mic button and attach its click handler
- * @param {HTMLTextAreaElement} textArea - The textArea element
- * @returns {HTMLButtonElement} - The newly created mic button
- */
 function createMicButton(textArea) {
     const micButton = document.createElement('button');
-    micButton.id = 'mic-button';
+    micButton.id = MIC_BUTTON_ID;
     const imageUrl = chrome.runtime.getURL("./assets/mic.png");
     micButton.style.backgroundImage = `url('${imageUrl}')`;
-    micButton.onclick = (e) => handleClick(e, micButton, textArea);
+    micButton.onclick = (event) => handleMicButtonClick({ event, micButton, textArea });
     return micButton;
 }
 
-/**
- * Starts the speech recognition
- * @param {SpeechRecognition} recognition - The speech recognition object
- */
-function startSpeechRecognition(recognition) {
-    recognition.start();
+function startSpeechRecognition() {
+    speechRecognition.start();
 }
 
-/**
- * Handles the click event of the mic button
- * @param {Event} e - The click event
- * @param {HTMLButtonElement} micButton - The mic button element
- * @param {HTMLTextAreaElement} textArea - The textArea element
- */
-function handleClick(e, micButton, textArea) {
-    e.preventDefault();
+function handleMicButtonClick({ event, micButton, textArea }) {
+    event.preventDefault();
     if (micButton.classList.contains('active')) {
         stopSpeechRecognition(micButton, textArea);
     } else {
-        startSpeechRecognition(recognition);
+        startSpeechRecognition();
     }
 }
 
-/**
- * Initializes the Speech Recognition object
- * @param {HTMLButtonElement} micButton - The mic button element
- * @param {HTMLTextAreaElement} textArea - The textArea element
- * @returns {SpeechRecognition} - The speech recognition object
- */
-function initSpeechRecognition(micButton, textArea) {
-    recognition = new webkitSpeechRecognition();
+function initializeSpeechRecognition({ micButton, textArea }) {
+    const recognition = new webkitSpeechRecognition();
     recognition.lang = 'en-US';
     recognition.interimResults = true;
     recognition.continuous = true;
 
-    recognition.onstart = () => handleRecognitionStart(micButton, textArea);
-    recognition.onresult = (event) => handleRecognitionResult(event, micButton, textArea);
+    recognition.onstart = () => handleSpeechRecognitionStart(micButton, textArea);
+    recognition.onresult = (event) => handleSpeechRecognitionResult({ event, micButton, textArea });
     recognition.onerror = (error) => console.error('Speech recognition error:', error);
     return recognition;
 }
 
-/**
- * Handles the start event of the speech recognition
- * @param {HTMLButtonElement} micButton - The mic button element
- * @param {HTMLTextAreaElement} textArea - The textArea element
- */
-function handleRecognitionStart(micButton, textArea) {
+function handleSpeechRecognitionStart(micButton, textArea) {
     let newImageUrl = chrome.runtime.getURL("/assets/mic-active.png");
     micButton.style.backgroundImage = `url('${newImageUrl}')`;
     micButton.classList.add('active');
-    prevText = textArea.value + ' ';
+    previousSpeechText = textArea.value + ' ';
 }
 
-/**
- * Handles the result event of the speech recognition
- * @param {Event} event - The recognition result event
- * @param {HTMLButtonElement} micButton - The mic button element
- * @param {HTMLTextAreaElement} textArea - The textArea element
- */
-function handleRecognitionResult(event, micButton, textArea) {
-    if (Date.now() - lastStopTime < 300) return; // Add this line
+function handleSpeechRecognitionResult({ event, micButton, textArea }) {
+    if (Date.now() - lastStopTime < 300) return;
 
-    let currSpeech = '';
+    let currentSpeech = '';
     for (let i = 0; i < event.results.length; i++) {
         for (let j = 0; j < event.results[i].length; j++) {
-            currSpeech += event.results[i][j].transcript;
+            currentSpeech += event.results[i][j].transcript;
         }
     }
-    textArea.value = prevText + currSpeech;
+    textArea.value = previousSpeechText + currentSpeech;
     textArea.dispatchEvent(new Event('input', { bubbles: true }));
 }
 
-/**
- * Stops the speech recognition
- * @param {HTMLButtonElement} micButton - The mic button element
- * @param {HTMLTextAreaElement} textArea - The textArea element
- */
 function stopSpeechRecognition(micButton, textArea) {
-    recognition.stop();
-    lastStopTime = Date.now(); // Add this line
+    speechRecognition.stop();
+    lastStopTime = Date.now();
     micButton.classList.remove('active');
     const newImageUrl = chrome.runtime.getURL("./assets/mic.png");
     micButton.style.backgroundImage = `url('${newImageUrl}')`;
     textArea.focus();
 }
 
-/**
- * Loads the CSS styles for the mic button
- */
-async function loadCSSStyles() {
+async function loadMicButtonStyles() {
     try {
         const response = await fetch(chrome.runtime.getURL('./assets/styles.css'));
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
@@ -143,11 +100,6 @@ async function loadCSSStyles() {
     }
 }
 
-/**
- * Wraps the textArea with the mic button
- * @param {HTMLTextAreaElement} textArea - The textArea element
- * @param {HTMLButtonElement} micButton - The mic button element
- */
 function wrapTextAreaWithMicButton(textArea, micButton) {
     const parentElement = textArea.parentElement;
     const wrapperDiv = document.createElement('div');
@@ -159,17 +111,13 @@ function wrapTextAreaWithMicButton(textArea, micButton) {
     textArea.focus();
 }
 
-/**
- * Attaches keyboard shortcuts for the chatbot
- * @param {HTMLTextAreaElement} textArea - The textArea element
- * @param {HTMLButtonElement} micButton - The mic button element
- */
 function attachKeyboardShortcuts(textArea, micButton) {
     document.addEventListener('keydown', (event) => {
         if (event.key === 'Enter') {
-            let micOn = micButton.classList.contains('active');
-            if (micOn) micButton.click();
-            if (micOn) {
+            if (isMicButtonActive(micButton)) {
+                micButton.click();
+            }
+            if (isMicButtonActive(micButton)) {
                 setTimeout(() => {
                     micButton.click();
                 }, 800)
@@ -181,19 +129,12 @@ function attachKeyboardShortcuts(textArea, micButton) {
         if (!shortcutPressed) return;
 
         const key = event.key.toLowerCase();
-        handleKeyboardShortcut(key, micButton, textArea, event);
+        handleKeyboardShortcut({ key, micButton, textArea, event });
     });
 }
 
-/**
- * Handles the keyboard shortcuts for the chatbot
- * @param {string} key - The key pressed
- * @param {HTMLButtonElement} micButton - The mic button element
- * @param {HTMLTextAreaElement} textArea - The textArea element
- * @param {Event} event - The keyboard event
- */
-function handleKeyboardShortcut(key, micButton, textArea, event) {
-    let micOn = micButton.classList.contains('active');
+function handleKeyboardShortcut({ key, micButton, textArea, event }) {
+    let micOn = isMicButtonActive(micButton);
     switch (key) {
         case 'm':
             event.preventDefault();
@@ -202,7 +143,7 @@ function handleKeyboardShortcut(key, micButton, textArea, event) {
         case 'd':
             event.preventDefault();
             if (micOn) micButton.click();
-            prevText = '';
+            previousSpeechText = '';
             textArea.value = '';
             if (micOn) {
                 setTimeout(() => {
@@ -227,44 +168,45 @@ function handleKeyboardShortcut(key, micButton, textArea, event) {
     }
 }
 
-// Run main function if page is dynamically updated
-function addMicrophone() {
-    if (!isMainActive) {
-        main();
-        isMainActive = true;
+function isMicButtonActive(micButton) {
+    return micButton.classList.contains('active');
+}
+
+function addChatbot() {
+    if (!isChatbotActive) {
+        initializeChatbot();
+        isChatbotActive = true;
     }
 }
 
-// Initialize observer to reload button if it is removed
-function initObserver() {
+function initMutationObserver() {
     const observer = new MutationObserver(
         (mutations) => {
             for (const mutation of mutations) {
                 if (
                     mutation.type === 'childList' &&
                     mutation.addedNodes.length > 0 &&
-                    !document.querySelector('#mic-button') &&
-                    !isMainRunning &&
-                    isMainActive
+                    !document.querySelector(`#${MIC_BUTTON_ID}`) &&
+                    !isChatbotRunning &&
+                    isChatbotActive
                 ) {
-                    removeMain();
-                    main();
+                    removeChatbot();
+                    initializeChatbot();
                 }
             }
         });
     observer.observe(document.body, { childList: true, subtree: true });
 }
 
-// Remove main function
-function removeMain() {
-    if (recognition) {
-        recognition.onend = null;
-        recognition.abort();
+function removeChatbot() {
+    if (speechRecognition) {
+        speechRecognition.onend = null;
+        speechRecognition.abort();
     }
-    const micButton = document.querySelector('#mic-button');
+    const micButton = document.querySelector(`#${MIC_BUTTON_ID}`);
     if (micButton) micButton.remove();
 }
 
-window.addEventListener('resize', addMicrophone);
-addMicrophone();
-initObserver();
+window.addEventListener('resize', addChatbot);
+addChatbot();
+initMutationObserver();
