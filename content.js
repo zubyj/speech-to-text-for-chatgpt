@@ -13,6 +13,7 @@ class SpeechToTextManager {
         this.micButton = null;
         this.textArea = null;
         this.speechToTextInput = null;
+        this.unsavedSpeech = '';
 
         chrome.storage.local.get(["formValues"], (result) => {
             if (result.formValues) {
@@ -42,7 +43,13 @@ class SpeechToTextManager {
 
         this.textArea.addEventListener('keydown', (event) => this.cycleThroughPreviousInputs(event));
 
+        this.textArea.addEventListener('input', (event) => {
+            this.unsavedSpeech = this.textArea.value;
+        });
+
         this.isMicRunning = false;
+
+
     }
 
     // Cycles through previous inputs in response to ArrowUp and ArrowDown key presses.
@@ -157,6 +164,16 @@ class SpeechToTextManager {
     handleKeyboardEvent(event) {
         if (event.key === 'Enter' && !event.shiftKey) {
             event.preventDefault();
+
+            // add the unsaved speech to storage
+            if (this.unsavedSpeech) {
+                this.previousInputs.unshift(this.unsavedSpeech);
+                chrome.storage.local.set({ formValues: this.previousInputs }, function () {
+                    console.log("Form value saved to storage");
+                });
+                this.inputIndex = -1;
+                this.unsavedSpeech = '';
+            }
 
             this.handleFormSubmit(event);
             if (this.isMicButtonActive()) {
