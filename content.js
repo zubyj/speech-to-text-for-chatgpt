@@ -4,6 +4,14 @@ let lastStopTime = 0;
 let isChatbotActive = false;
 let isChatbotRunning = false;
 const MIC_BUTTON_ID = 'mic-button';
+let previousInputs = [];
+let inputIndex = -1;
+
+chrome.storage.local.get(["formValues"], function (result) {
+    if (result.formValues) {
+        previousInputs = result.formValues;
+    }
+});
 
 async function initializeChatbot() {
     isChatbotRunning = true;
@@ -23,16 +31,41 @@ async function initializeChatbot() {
 
     let form = document.getElementsByTagName('form')[0];
     if (form) {
-        form.addEventListener('submit', function () {
+        form.addEventListener('submit', function (e) {
             if (isMicButtonActive(micButton)) {
                 stopSpeechRecognition(micButton, textArea);
+            }
+            if (textArea.value) {
+                previousInputs.push(textArea.value);
+                chrome.storage.local.set({ formValues: previousInputs }, function () {
+                    console.log("Form value saved to storage");
+                });
             }
         });
     }
 
+    textArea.addEventListener('keydown', cycleThroughPreviousInputs);
 
     isChatbotRunning = false;
 }
+
+function cycleThroughPreviousInputs(event) {
+    // Check if either cmd (Mac) or ctrl (Windows) is being pressed
+    const shortcutPressed = navigator.platform.startsWith('Mac') ? event.metaKey : event.ctrlKey;
+
+    if (shortcutPressed && event.key === "ArrowDown") {
+        if (inputIndex < previousInputs.length - 1) {
+            inputIndex++;
+            this.value = previousInputs[inputIndex];
+        }
+    } else if (shortcutPressed && event.key === "ArrowUp") {
+        if (inputIndex > 0) {
+            inputIndex--;
+            this.value = previousInputs[inputIndex];
+        }
+    }
+}
+
 
 function createMicButton(textArea) {
     const micButton = document.createElement('button');
