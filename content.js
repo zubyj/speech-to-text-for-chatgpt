@@ -47,14 +47,12 @@ class SpeechToTextManager {
 
     // Cycles through previous inputs in response to ArrowUp and ArrowDown key presses.
     cycleThroughPreviousInputs(event) {
-        const shortcutPressed = navigator.platform.startsWith('Mac') ? event.metaKey : event.ctrlKey;
-
-        if (shortcutPressed && event.key === "ArrowDown") {
+        if (event.ctrlKey && event.key === "ArrowDown") {
             if (this.inputIndex < this.previousInputs.length - 1) {
                 this.inputIndex++;
                 this.textArea.value = this.previousInputs[this.inputIndex];
             }
-        } else if (shortcutPressed && event.key === "ArrowUp") {
+        } else if (event.ctrlKey && event.key === "ArrowUp") {
             if (this.inputIndex > 0) {
                 this.inputIndex--;
                 this.textArea.value = this.previousInputs[this.inputIndex];
@@ -167,9 +165,7 @@ class SpeechToTextManager {
             }
         }
 
-        const isMac = navigator.userAgent.includes('Mac');
-        const shortcutPressed = isMac ? event.metaKey : event.ctrlKey;
-        if (!shortcutPressed) return;
+        if (!event.ctrlKey) return;
 
         const key = event.key.toLowerCase();
         this.handleKeyboardShortcut(key, event);
@@ -191,11 +187,13 @@ class SpeechToTextManager {
     handleKeyboardShortcut(key, event) {
         let micOn = this.isMicButtonActive();
         switch (key) {
-            case 'm':
+            // Toggles the mic
+            case 's':
                 event.preventDefault();
                 this.micButton.click();
                 break;
-            case 'd':
+            // Clears the text
+            case 'u':
                 event.preventDefault();
                 if (micOn) this.micButton.click();
                 this.previousSpeechResult = '';
@@ -206,10 +204,13 @@ class SpeechToTextManager {
                     }, 300)
                 }
                 break;
-            case 'b':
+            // Deletes the word before the cursor
+            case 'w':
                 event.preventDefault();
                 if (micOn) this.micButton.click();
-                this.textArea.value = this.previousSpeechResult.trim();
+                let newText = this.textArea.value.split(' ').slice(0, -1).join(' ');
+                this.previousSpeechResult = newText + ' ';
+                this.textArea.value = newText;
                 if (micOn) {
                     setTimeout(() => {
                         this.micButton.click();
