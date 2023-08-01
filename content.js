@@ -21,6 +21,16 @@ async function initializeChatbot() {
     wrapTextAreaWithMicButton(textArea, micButton);
     attachKeyboardShortcuts(textArea, micButton);
 
+    let form = document.getElementsByTagName('form')[0];
+    if (form) {
+        form.addEventListener('submit', function () {
+            if (isMicButtonActive(micButton)) {
+                stopSpeechRecognition(micButton, textArea);
+            }
+        });
+    }
+
+
     isChatbotRunning = false;
 }
 
