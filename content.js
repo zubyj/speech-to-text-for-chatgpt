@@ -122,25 +122,12 @@ function wrapTextAreaWithMicButton(textArea, micButton) {
 }
 
 function attachKeyboardShortcuts(textArea, micButton) {
-    document.addEventListener('keydown', (event) => {
-        if (event.key === 'Enter') {
-            if (isMicButtonActive(micButton)) {
-                micButton.click();
-            }
-            if (isMicButtonActive(micButton)) {
-                setTimeout(() => {
-                    micButton.click();
-                }, 800)
-            }
-        }
+    const isMac = navigator.userAgent.includes('Mac');
+    const shortcutPressed = isMac ? event.metaKey : event.ctrlKey;
+    if (!shortcutPressed) return;
 
-        const isMac = navigator.userAgent.includes('Mac');
-        const shortcutPressed = isMac ? event.metaKey : event.ctrlKey;
-        if (!shortcutPressed) return;
-
-        const key = event.key.toLowerCase();
-        handleKeyboardShortcut({ key, micButton, textArea, event });
-    });
+    const key = event.key.toLowerCase();
+    handleKeyboardShortcut({ key, micButton, textArea, event });
 }
 
 function handleKeyboardShortcut({ key, micButton, textArea, event }) {
