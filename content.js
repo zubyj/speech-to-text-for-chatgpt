@@ -1,168 +1,168 @@
-let speechRecognition;
-let previousSpeechText = '';
-let lastStopTime = 0;
-let isChatbotActive = false;
-let isChatbotRunning = false;
 const MIC_BUTTON_ID = 'mic-button';
-let previousInputs = [];
-let inputIndex = -1;
+const MIC_ACTIVE_CLASS = 'active';
+const MIC_IMG_URL = './assets/mic.png';
+const MIC_ACTIVE_IMG_URL = '/assets/mic-active.png';
 
-chrome.storage.local.get(["formValues"], function (result) {
-    if (result.formValues) {
-        previousInputs = result.formValues;
-    }
-});
+class SpeechToTextManager {
+    constructor() {
+        this.previousSpeechResult = '';
+        this.lastMicStopTime = 0;
+        this.isMicRunning = false;
+        this.previousInputs = [];
+        this.inputIndex = -1;
+        this.micButton = null;
+        this.textArea = null;
+        this.speechToTextInput = null;
 
-async function initializeChatbot() {
-    isChatbotRunning = true;
-
-    const textArea = document.getElementById('prompt-textarea');
-    if (!textArea) return;
-
-    let micButton = document.getElementById(MIC_BUTTON_ID);
-    if (micButton) return;
-
-    micButton = createMicButton(textArea);
-    speechRecognition = initializeSpeechRecognition({ micButton, textArea });
-    await loadMicButtonStyles();
-
-    wrapTextAreaWithMicButton(textArea, micButton);
-    attachKeyboardShortcuts(textArea, micButton);
-
-    let form = document.getElementsByTagName('form')[0];
-    if (form) {
-        form.addEventListener('submit', function (e) {
-            if (isMicButtonActive(micButton)) {
-                stopSpeechRecognition(micButton, textArea);
-            }
-            if (textArea.value) {
-                previousInputs.push(textArea.value);
-                chrome.storage.local.set({ formValues: previousInputs }, function () {
-                    console.log("Form value saved to storage");
-                });
+        chrome.storage.local.get(["formValues"], (result) => {
+            if (result.formValues) {
+                this.previousInputs = result.formValues;
             }
         });
     }
 
-    textArea.addEventListener('keydown', cycleThroughPreviousInputs);
+    // Initialize the microphone button and speech-to-text functionality.
+    async initializeMic() {
+        this.isMicRunning = true;
 
-    isChatbotRunning = false;
-}
+        this.textArea = document.getElementById('prompt-textarea');
+        if (!this.textArea) return;
 
-function cycleThroughPreviousInputs(event) {
-    // Check if either cmd (Mac) or ctrl (Windows) is being pressed
-    const shortcutPressed = navigator.platform.startsWith('Mac') ? event.metaKey : event.ctrlKey;
+        this.micButton = this.createMicButton(this.textArea);
+        this.speechToTextInput = this.initializeSpeechToText(this.micButton, this.textArea);
+        await this.loadMicButtonStyles();
 
-    if (shortcutPressed && event.key === "ArrowDown") {
-        if (inputIndex < previousInputs.length - 1) {
-            inputIndex++;
-            this.value = previousInputs[inputIndex];
+        this.addMicButtonToTextArea();
+        this.attachKeyboardShortcuts();
+
+        let form = document.getElementsByTagName('form')[0];
+        if (form) {
+            form.addEventListener('submit', (e) => this.handleFormSubmit(e));
         }
-    } else if (shortcutPressed && event.key === "ArrowUp") {
-        if (inputIndex > 0) {
-            inputIndex--;
-            this.value = previousInputs[inputIndex];
-        }
+
+        this.textArea.addEventListener('keydown', (event) => this.cycleThroughPreviousInputs(event));
+
+        this.isMicRunning = false;
     }
-}
 
+    // Cycles through previous inputs in response to ArrowUp and ArrowDown key presses.
+    cycleThroughPreviousInputs(event) {
+        const shortcutPressed = navigator.platform.startsWith('Mac') ? event.metaKey : event.ctrlKey;
 
-function createMicButton(textArea) {
-    const micButton = document.createElement('button');
-    micButton.id = MIC_BUTTON_ID;
-    const imageUrl = chrome.runtime.getURL("./assets/mic.png");
-    micButton.style.backgroundImage = `url('${imageUrl}')`;
-    micButton.onclick = (event) => handleMicButtonClick({ event, micButton, textArea });
-    return micButton;
-}
-
-function startSpeechRecognition() {
-    speechRecognition.start();
-}
-
-function handleMicButtonClick({ event, micButton, textArea }) {
-    event.preventDefault();
-    if (micButton.classList.contains('active')) {
-        stopSpeechRecognition(micButton, textArea);
-    } else {
-        startSpeechRecognition();
-    }
-}
-
-function initializeSpeechRecognition({ micButton, textArea }) {
-    const recognition = new webkitSpeechRecognition();
-    recognition.lang = 'en-US';
-    recognition.interimResults = true;
-    recognition.continuous = true;
-
-    recognition.onstart = () => handleSpeechRecognitionStart(micButton, textArea);
-    recognition.onresult = (event) => handleSpeechRecognitionResult({ event, micButton, textArea });
-    recognition.onerror = (error) => console.error('Speech recognition error:', error);
-    return recognition;
-}
-
-function handleSpeechRecognitionStart(micButton, textArea) {
-    let newImageUrl = chrome.runtime.getURL("/assets/mic-active.png");
-    micButton.style.backgroundImage = `url('${newImageUrl}')`;
-    micButton.classList.add('active');
-    previousSpeechText = textArea.value + ' ';
-}
-
-function handleSpeechRecognitionResult({ event, micButton, textArea }) {
-    if (Date.now() - lastStopTime < 300) return;
-
-    let currentSpeech = '';
-    for (let i = 0; i < event.results.length; i++) {
-        for (let j = 0; j < event.results[i].length; j++) {
-            currentSpeech += event.results[i][j].transcript;
-        }
-    }
-    textArea.value = previousSpeechText + currentSpeech;
-    textArea.dispatchEvent(new Event('input', { bubbles: true }));
-}
-
-function stopSpeechRecognition(micButton, textArea) {
-    speechRecognition.stop();
-    lastStopTime = Date.now();
-    micButton.classList.remove('active');
-    const newImageUrl = chrome.runtime.getURL("./assets/mic.png");
-    micButton.style.backgroundImage = `url('${newImageUrl}')`;
-    textArea.focus();
-}
-
-async function loadMicButtonStyles() {
-    try {
-        const response = await fetch(chrome.runtime.getURL('./assets/styles.css'));
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        const data = await response.text();
-        let style = document.createElement('style');
-        style.innerHTML = data;
-        document.head.appendChild(style);
-    } catch (error) {
-        console.error('Error fetching CSS file:', error);
-    }
-}
-
-function wrapTextAreaWithMicButton(textArea, micButton) {
-    const parentElement = textArea.parentElement;
-    const wrapperDiv = document.createElement('div');
-    wrapperDiv.classList.add('wrapper-div');
-    parentElement.removeChild(textArea);
-    wrapperDiv.appendChild(micButton);
-    wrapperDiv.appendChild(textArea);
-    parentElement.appendChild(wrapperDiv);
-    textArea.focus();
-}
-
-function attachKeyboardShortcuts(textArea, micButton) {
-    document.addEventListener('keydown', (event) => {
-        if (event.key === 'Enter') {
-            if (isMicButtonActive(micButton)) {
-                micButton.click();
+        if (shortcutPressed && event.key === "ArrowDown") {
+            if (this.inputIndex < this.previousInputs.length - 1) {
+                this.inputIndex++;
+                this.textArea.value = this.previousInputs[this.inputIndex];
             }
-            if (isMicButtonActive(micButton)) {
+        } else if (shortcutPressed && event.key === "ArrowUp") {
+            if (this.inputIndex > 0) {
+                this.inputIndex--;
+                this.textArea.value = this.previousInputs[this.inputIndex];
+            }
+        }
+    }
+
+    createMicButton() {
+        const micButton = document.createElement('button');
+        micButton.id = MIC_BUTTON_ID;
+        const imageUrl = chrome.runtime.getURL(MIC_IMG_URL);
+        micButton.style.backgroundImage = `url('${imageUrl}')`;
+        micButton.onclick = (event) => this.handleMicButtonClick(event);
+        return micButton;
+    }
+
+    startSpeechToText() {
+        this.speechToTextInput.start();
+    }
+
+    handleMicButtonClick(event) {
+        event.preventDefault();
+        if (this.micButton.classList.contains(MIC_ACTIVE_CLASS)) {
+            this.stopSpeechToText();
+        } else {
+            this.startSpeechToText();
+        }
+    }
+
+    initializeSpeechToText() {
+        const recognition = new webkitSpeechRecognition();
+        recognition.lang = 'en-US';
+        recognition.interimResults = true;
+        recognition.continuous = true;
+
+        recognition.onstart = () => this.handleSpeechStart();
+        recognition.onresult = (event) => this.handleSpeechResult(event);
+        recognition.onerror = (error) => console.error('Speech recognition error:', error);
+        return recognition;
+    }
+
+    handleSpeechStart() {
+        let newImageUrl = chrome.runtime.getURL(MIC_ACTIVE_IMG_URL);
+        this.micButton.style.backgroundImage = `url('${newImageUrl}')`;
+        this.micButton.classList.add(MIC_ACTIVE_CLASS);
+        this.previousSpeechResult = this.textArea.value + ' ';
+    }
+
+    handleSpeechResult(event) {
+        if (Date.now() - this.lastMicStopTime < 300) return;
+
+        let currentSpeech = '';
+        for (let i = 0; i < event.results.length; i++) {
+            for (let j = 0; j < event.results[i].length; j++) {
+                currentSpeech += event.results[i][j].transcript;
+            }
+        }
+        this.textArea.value = this.previousSpeechResult + currentSpeech;
+        this.textArea.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+
+    stopSpeechToText() {
+        this.speechToTextInput.stop();
+        this.lastMicStopTime = Date.now();
+        this.micButton.classList.remove(MIC_ACTIVE_CLASS);
+        const newImageUrl = chrome.runtime.getURL(MIC_IMG_URL);
+        this.micButton.style.backgroundImage = `url('${newImageUrl}')`;
+        this.textArea.focus();
+    }
+
+    async loadMicButtonStyles() {
+        try {
+            const response = await fetch(chrome.runtime.getURL('./assets/styles.css'));
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            const data = await response.text();
+            let style = document.createElement('style');
+            style.innerHTML = data;
+            document.head.appendChild(style);
+        } catch (error) {
+            console.error('Error fetching CSS file:', error);
+        }
+    }
+
+    addMicButtonToTextArea() {
+        const parentElement = this.textArea.parentElement;
+        const wrapperDiv = document.createElement('div');
+        wrapperDiv.classList.add('wrapper-div');
+        parentElement.removeChild(this.textArea);
+        parentElement.appendChild(this.micButton);
+        wrapperDiv.appendChild(this.micButton);
+        wrapperDiv.appendChild(this.textArea);
+        parentElement.appendChild(wrapperDiv);
+        this.textArea.focus();
+    }
+
+    attachKeyboardShortcuts() {
+        document.addEventListener('keydown', (event) => this.handleKeyboardEvent(event));
+    }
+
+    handleKeyboardEvent(event) {
+        if (event.key === 'Enter' && !event.shiftKey) {
+            this.handleFormSubmit(event);
+            if (this.isMicButtonActive()) {
+                this.micButton.click();
+            }
+            if (this.isMicButtonActive()) {
                 setTimeout(() => {
-                    micButton.click();
+                    this.micButton.click();
                 }, 800)
             }
         }
@@ -172,84 +172,72 @@ function attachKeyboardShortcuts(textArea, micButton) {
         if (!shortcutPressed) return;
 
         const key = event.key.toLowerCase();
-        handleKeyboardShortcut({ key, micButton, textArea, event });
-    });
-}
-
-function handleKeyboardShortcut({ key, micButton, textArea, event }) {
-    let micOn = isMicButtonActive(micButton);
-    switch (key) {
-        case 'm':
-            event.preventDefault();
-            micButton.click();
-            break;
-        case 'd':
-            event.preventDefault();
-            if (micOn) micButton.click();
-            previousSpeechText = '';
-            textArea.value = '';
-            if (micOn) {
-                setTimeout(() => {
-                    micButton.click();
-                }, 300)
-            }
-            break;
-        case 'b':
-            event.preventDefault();
-            if (micOn) micButton.click();
-            let newText = textArea.value.split(' ').slice(0, -1).join(' ');
-            textArea.value = newText;
-            if (micOn) {
-                setTimeout(() => {
-                    micButton.click();
-                }, 800)
-            }
-            break;
-
-        default:
-            return;
+        this.handleKeyboardShortcut(key, event);
     }
-}
 
-function isMicButtonActive(micButton) {
-    return micButton.classList.contains('active');
-}
-
-function addChatbot() {
-    if (!isChatbotActive) {
-        initializeChatbot();
-        isChatbotActive = true;
+    handleFormSubmit(e) {
+        e.preventDefault();
+        if (this.isMicButtonActive()) {
+            this.stopSpeechToText();
+        }
+        if (this.textArea.value) {
+            this.previousInputs.push(this.textArea.value);
+            chrome.storage.local.set({ formValues: this.previousInputs }, function () {
+                console.log("Form value saved to storage");
+            });
+        }
     }
-}
 
-function initMutationObserver() {
-    const observer = new MutationObserver(
-        (mutations) => {
-            for (const mutation of mutations) {
-                if (
-                    mutation.type === 'childList' &&
-                    mutation.addedNodes.length > 0 &&
-                    !document.querySelector(`#${MIC_BUTTON_ID}`) &&
-                    !isChatbotRunning &&
-                    isChatbotActive
-                ) {
-                    removeChatbot();
-                    initializeChatbot();
+    handleKeyboardShortcut(key, event) {
+        let micOn = this.isMicButtonActive();
+        switch (key) {
+            case 'm':
+                event.preventDefault();
+                this.micButton.click();
+                break;
+            case 'd':
+                event.preventDefault();
+                if (micOn) this.micButton.click();
+                this.previousSpeechResult = '';
+                this.textArea.value = '';
+                if (micOn) {
+                    setTimeout(() => {
+                        this.micButton.click();
+                    }, 300)
                 }
-            }
-        });
-    observer.observe(document.body, { childList: true, subtree: true });
-}
-
-function removeChatbot() {
-    if (speechRecognition) {
-        speechRecognition.onend = null;
-        speechRecognition.abort();
+                break;
+            case 'b':
+                event.preventDefault();
+                if (micOn) this.micButton.click();
+                this.textArea.value = this.previousSpeechResult.trim();
+                if (micOn) {
+                    setTimeout(() => {
+                        this.micButton.click();
+                    }, 300)
+                }
+                break;
+            default:
+                break;
+        }
     }
-    const micButton = document.querySelector(`#${MIC_BUTTON_ID}`);
-    if (micButton) micButton.remove();
+
+    // Checks if the mic button is active.
+    isMicButtonActive() {
+        return this.micButton && this.micButton.classList.contains(MIC_ACTIVE_CLASS);
+    }
+
+    // Initialize the microphone if it isn't already active.
+    addMic() {
+        if (document.getElementById(MIC_BUTTON_ID)) {
+            console.log('Mic button already initialized.');
+            return;
+        }
+        if (!this.isMicButtonActive()) {
+            this.initializeMic();
+        }
+    }
 }
 
-window.addEventListener('resize', addChatbot);
-addChatbot();
-initMutationObserver();
+let manager = new SpeechToTextManager();
+window.addEventListener('resize', () => manager.addMic());
+manager.addMic();
