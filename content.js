@@ -14,6 +14,8 @@ class SpeechToTextManager {
         this.textArea = null;
         this.speechToTextInput = null;
 
+        this.currentSpeech = '';
+
         chrome.storage.local.get(["formValues"], (result) => {
             if (result.formValues) {
                 this.previousInputs = result.formValues;
@@ -47,12 +49,14 @@ class SpeechToTextManager {
 
     // Cycles through previous inputs in response to ArrowUp and ArrowDown key presses.
     cycleThroughPreviousInputs(event) {
-        if (event.ctrlKey && event.key === "ArrowDown") {
+        const shortcutPressed = navigator.platform.startsWith('Mac') ? event.metaKey : event.ctrlKey;
+
+        if (shortcutPressed && event.key === "ArrowDown") {
             if (this.inputIndex < this.previousInputs.length - 1) {
                 this.inputIndex++;
                 this.textArea.value = this.previousInputs[this.inputIndex];
             }
-        } else if (event.ctrlKey && event.key === "ArrowUp") {
+        } else if (shortcutPressed && event.key === "ArrowUp") {
             if (this.inputIndex > 0) {
                 this.inputIndex--;
                 this.textArea.value = this.previousInputs[this.inputIndex];
@@ -154,6 +158,12 @@ class SpeechToTextManager {
 
     handleKeyboardEvent(event) {
         if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault();
+            console.log("Enter pressed. I want to save the text input before its cleared and submitted.");
+            // I want to save the text area but it gets cleared before I can save it.
+            console.log(this.previousSpeechResult);
+            console.log(this.textArea.value);
+
             this.handleFormSubmit(event);
             if (this.isMicButtonActive()) {
                 this.micButton.click();
@@ -177,11 +187,19 @@ class SpeechToTextManager {
             this.stopSpeechToText();
         }
         if (this.textArea.value) {
+            // save the current speech to storage before it's cleared
+            this.currentSpeech = this.textArea.value;
+            console.log("Current speech: " + this.currentSpeech)
+            chrome.storage.local.set({ currentSpeech: this.currentSpeech }, function () {
+                console.log("Current speech saved to storage");
+            });
             this.previousInputs.push(this.textArea.value);
             chrome.storage.local.set({ formValues: this.previousInputs }, function () {
                 console.log("Form value saved to storage");
             });
         }
+        // reset currentSpeech after textarea is cleared
+        this.currentSpeech = '';
     }
 
     handleKeyboardShortcut(key, event) {
