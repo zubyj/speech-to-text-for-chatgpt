@@ -252,7 +252,6 @@ class SpeechToTextManager {
                 event.preventDefault();
                 if (micOn) this.micButton.click();
                 let newText = this.textArea.value.split(' ').slice(0, -1).join(' ');
-                this.previousSpeechResult = newText + ' ';
                 this.textArea.value = newText;
                 if (micOn) {
                     setTimeout(() => {
