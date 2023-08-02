@@ -251,7 +251,7 @@ class SpeechToTextManager {
             case 'w':
                 event.preventDefault();
                 if (micOn) this.micButton.click();
-                let newText = this.textArea.value.split(' ').slice(0, -1).join(' ');
+                let newText = this.textArea.value.replace(/(\s\S+)$/, '');
                 this.textArea.value = newText;
                 if (micOn) {
                     setTimeout(() => {
