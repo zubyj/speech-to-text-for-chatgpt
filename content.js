@@ -14,12 +14,32 @@ class SpeechToTextManager {
         this.textArea = null;
         this.speechToTextInput = null;
         this.unsavedSpeech = '';
+        this.initMutationObserver = this.initMutationObserver.bind(this);
 
         chrome.storage.local.get(["formValues"], (result) => {
             if (result.formValues) {
                 this.previousInputs = result.formValues;
             }
         });
+    }
+
+    initMutationObserver() {
+        const observer = new MutationObserver(
+            (mutations) => {
+                for (const mutation of mutations) {
+                    console
+                    if (
+                        mutation.type === 'childList' &&
+                        mutation.addedNodes.length > 0 &&
+                        !document.querySelector(`#${MIC_BUTTON_ID}`) &&
+                        !this.isMicRunning
+                    ) {
+                        this.initializeMic();
+                    }
+                }
+            }
+        );
+        observer.observe(document.body, { childList: true, subtree: true });
     }
 
     // Initialize the microphone button and speech-to-text functionality.
@@ -265,3 +285,4 @@ class SpeechToTextManager {
 let manager = new SpeechToTextManager();
 window.addEventListener('resize', () => manager.addMic());
 manager.addMic();
+manager.initMutationObserver();
