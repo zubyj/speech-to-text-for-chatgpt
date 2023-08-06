@@ -16,13 +16,14 @@ class SpeechToTextManager {
         this.unsavedSpeech = '';
         this.initMutationObserver = this.initMutationObserver.bind(this);
 
-        chrome.storage.local.get(["formValues"], (result) => {
-            if (result.formValues) {
-                this.previousInputs = result.formValues;
+        chrome.storage.local.get(["messageHistory"], (result) => {
+            if (result.messageHistory) {
+                this.previousInputs = result.messageHistory;
             }
         });
     }
 
+    // Readds the mic button if the user dynamically opens a different chat.
     initMutationObserver() {
         const observer = new MutationObserver(
             (mutations) => {
@@ -61,15 +62,21 @@ class SpeechToTextManager {
             form.addEventListener('submit', (e) => this.handleFormSubmit(e));
         }
 
-        this.textArea.addEventListener('keydown', (event) => this.cycleThroughPreviousInputs(event));
+        this.textArea.addEventListener('keydown', (event) => {
+            if (this.micButton.classList.contains(MIC_ACTIVE_CLASS)) {
+                if (!event.ctrlKey && (event.key !== 'u' && event.key !== 'w')) {
+                    this.stopSpeechToText();
+                }
+            }
+
+            this.cycleThroughPreviousInputs(event);
+        });
 
         this.textArea.addEventListener('input', (event) => {
             this.unsavedSpeech = this.textArea.value;
         });
 
         this.isMicRunning = false;
-
-
     }
 
     // Cycles through previous inputs in response to ArrowUp and ArrowDown key presses.
@@ -188,7 +195,7 @@ class SpeechToTextManager {
             // add the unsaved speech to storage
             if (this.unsavedSpeech) {
                 this.previousInputs.unshift(this.unsavedSpeech);
-                chrome.storage.local.set({ formValues: this.previousInputs }, function () {
+                chrome.storage.local.set({ messageHistory: this.previousInputs }, function () {
                     console.log("Form value saved to storage");
                 });
                 this.inputIndex = -1;
@@ -219,7 +226,7 @@ class SpeechToTextManager {
         }
         if (this.textArea.value) {
             this.previousInputs.unshift(this.textArea.value);
-            chrome.storage.local.set({ formValues: this.previousInputs }, function () {
+            chrome.storage.local.set({ messageHistory: this.previousInputs }, function () {
                 console.log("Form value saved to storage");
             });
             this.inputIndex = -1;
