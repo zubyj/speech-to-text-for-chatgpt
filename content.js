@@ -24,6 +24,7 @@ class SpeechToTextManager {
     }
 
     // Readds the mic button if the user dynamically opens a different chat.
+
     initMutationObserver() {
         const observer = new MutationObserver(
             (mutations) => {
@@ -182,6 +183,10 @@ class SpeechToTextManager {
         wrapperDiv.appendChild(this.textArea);
         parentElement.appendChild(wrapperDiv);
         this.textArea.focus();
+
+        // Ensure textarea uses the full available width
+        this.textArea.style.width = '100%';
+        this.textArea.style.boxSizing = 'border-box';
     }
 
     attachKeyboardShortcuts() {
@@ -196,7 +201,6 @@ class SpeechToTextManager {
             if (this.unsavedSpeech) {
                 this.previousInputs.unshift(this.unsavedSpeech);
                 chrome.storage.local.set({ messageHistory: this.previousInputs }, function () {
-                    console.log("Form value saved to storage");
                 });
                 this.inputIndex = -1;
                 this.unsavedSpeech = '';
@@ -227,7 +231,6 @@ class SpeechToTextManager {
         if (this.textArea.value) {
             this.previousInputs.unshift(this.textArea.value);
             chrome.storage.local.set({ messageHistory: this.previousInputs }, function () {
-                console.log("Form value saved to storage");
             });
             this.inputIndex = -1;
         }
@@ -279,7 +282,6 @@ class SpeechToTextManager {
     // Initialize the microphone if it isn't already active.
     addMic() {
         if (document.getElementById(MIC_BUTTON_ID)) {
-            console.log('Mic button already initialized.');
             return;
         }
         if (!this.isMicButtonActive()) {
