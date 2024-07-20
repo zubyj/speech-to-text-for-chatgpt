@@ -2,10 +2,12 @@
     background-repeat: no-repeat;
     background-size: contain;
     justify-content: center;
-    width: 20px;
-    height: 20px;
+    width: 25px;
+    height: 25px;
     margin-right: 16px;
+    bottom: 6px;
     position: relative;
+    /* bottom: 6px; */
     /* Added to make the position of pseudo-elements relative to mic-button */
     overflow: visible;
     /* Added to ensure pseudo-elements are not clipped */
@@ -14,9 +16,10 @@
 }
 
 .wrapper-div {
+    position: relative;
     display: flex;
     flex-direction: row;
-    align-items: center;
+    align-items: flex-end;
 }
 
 /* Animation for the rings */
