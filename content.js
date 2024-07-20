@@ -261,12 +261,13 @@ class SpeechToTextManager {
             case 'w':
                 event.preventDefault();
                 if (micOn) this.micButton.click();
-                let newText = this.textArea.value.replace(/(\s\S+)$/, '');
+                // Updated regex to match a word at the end or the only word in the textarea
+                let newText = this.textArea.value.replace(/(?:\s|^)(\S+)$/, '');
                 this.textArea.value = newText;
                 if (micOn) {
                     setTimeout(() => {
                         this.micButton.click();
-                    }, 300)
+                    }, 300);
                 }
                 break;
             default:
