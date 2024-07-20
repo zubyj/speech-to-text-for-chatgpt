@@ -18,7 +18,8 @@
                 "content.js"
             ],
             "matches": [
-                "https://chat.openai.com/*"
+                "https://chat.openai.com/*",
+                "https://chatgpt.com/*"
             ]
         }
     ],
@@ -30,7 +31,8 @@
                 "assets/styles.css"
             ],
             "matches": [
-                "https://chat.openai.com/*"
+                "https://chat.openai.com/*",
+                "https://chatgpt.com/*"
             ]
         }
     ]
