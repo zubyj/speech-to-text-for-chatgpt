@@ -45,21 +45,22 @@ class SpeechToTextManager {
         this.textArea = document.getElementById('prompt-textarea');
         if (!this.textArea) return;
 
-        this.micButton = this.createMicButton(this.textArea);
-        this.speechToTextInput = this.initializeSpeechToText(this.micButton, this.textArea);
+        this.micButton = this.createMicButton();
+        this.speechToTextInput = this.initializeSpeechToText();
         await this.loadMicButtonStyles();
         this.addMicButtonToTextArea();
-        this.attachKeyboardShortcuts();
-
-        // Bind form submission to handleFormSubmit for processing speech input.
-        let form = document.getElementsByTagName('form')[0];
-        if (form) {
-            form.addEventListener('submit', (e) => this.handleFormSubmit(e));
-        }
-        this.textArea.addEventListener('input', (event) => {
-            this.unsavedSpeech = this.textArea.value;
-        });
         this.isMicRunning = false;
+    }
+
+    // New method to update visible text
+    updateVisibleText(text) {
+        if (!this.textArea) return;
+
+        // Update the ProseMirror content
+        this.textArea.innerHTML = `<p>${text}</p>`;
+
+        // Trigger input event on the div to ensure ChatGPT registers the change
+        this.textArea.dispatchEvent(new Event('input', { bubbles: true }));
     }
 
     // Cycles through previously entered inputs using keyboard shortcuts.
@@ -121,21 +122,22 @@ class SpeechToTextManager {
         let newImageUrl = chrome.runtime.getURL(MIC_ACTIVE_IMG_URL);
         this.micButton.style.backgroundImage = `url('${newImageUrl}')`;
         this.micButton.classList.add(MIC_ACTIVE_CLASS);
-        this.previousSpeechResult = this.textArea.value + ' ';
     }
 
     // Processes and displays the speech-to-text results.
     handleSpeechResult(event) {
         if (Date.now() - this.lastMicStopTime < 300) return;
 
-        let currentSpeech = '';
-        for (let i = 0; i < event.results.length; i++) {
-            for (let j = 0; j < event.results[i].length; j++) {
-                currentSpeech += event.results[i][j].transcript;
-            }
+        // Get only the final result
+        const results = Array.from(event.results);
+        const lastResult = results[results.length - 1];
+
+        if (lastResult.isFinal) {
+            const transcript = lastResult[0].transcript;
+            const currentText = this.textArea.textContent || '';
+            const newText = currentText + (currentText ? ' ' : '') + transcript;
+            this.updateVisibleText(newText);
         }
-        this.textArea.value = this.previousSpeechResult + currentSpeech;
-        this.textArea.dispatchEvent(new Event('input', { bubbles: true }));
     }
 
     // Stops the speech recognition service.
@@ -165,17 +167,20 @@ class SpeechToTextManager {
     // Wraps the textarea and microphone button in a div, adjusting layout.
     addMicButtonToTextArea() {
         const parentElement = this.textArea.parentElement;
-        const wrapperDiv = document.createElement('div');
-        wrapperDiv.classList.add('wrapper-div');
-        parentElement.removeChild(this.textArea);
-        parentElement.appendChild(this.micButton);
-        wrapperDiv.appendChild(this.micButton);
-        wrapperDiv.appendChild(this.textArea);
-        parentElement.appendChild(wrapperDiv);
-        this.textArea.focus();
-        // Ensure textarea uses the full available width
-        this.textArea.style.width = '100%';
-        this.textArea.style.boxSizing = 'border-box';
+        if (!parentElement) return;
+
+        // Insert mic button as sibling of ProseMirror div
+        parentElement.insertBefore(this.micButton, this.textArea);
+
+        // Position the mic button
+        parentElement.style.position = 'relative';
+        this.micButton.style.position = 'absolute';
+        this.micButton.style.left = '10px';
+        this.micButton.style.bottom = '10px';
+        this.micButton.style.zIndex = '2';
+
+        // Add padding to the ProseMirror div
+        this.textArea.style.paddingLeft = '40px';
     }
 
     // Attaches event listeners for keyboard shortcuts.
