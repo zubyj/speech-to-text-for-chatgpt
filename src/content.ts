@@ -2,6 +2,9 @@ import { SpeechRecognitionService } from './services/SpeechRecognitionService';
 import { UIElements, SpeechState, SpeechManagerConfig } from './types';
 
 class SpeechToTextManager {
+    private readonly MAX_RETRIES = 5;
+    private readonly INITIAL_RETRY_DELAY = 500;
+    private retryCount = 0;
     private speechService: SpeechRecognitionService;
     private elements: UIElements = {
         textArea: null,
@@ -25,16 +28,82 @@ class SpeechToTextManager {
         this.initialize();
     }
 
-    private initialize(): void {
-        // Initialize UI elements
-        this.elements.textArea = document.getElementById('prompt-textarea') as HTMLTextAreaElement;
-        if (!this.elements.textArea) return;
+    private async initialize(): Promise<void> {
+        try {
+            await this.waitForTextArea();
+            this.elements.micButton = this.createMicButton();
+            this.setupEventListeners();
+            this.injectStyles();
+        } catch (error) {
+            console.error('Failed to initialize speech-to-text:', error);
+        }
+    }
 
-        this.elements.displayElement = this.elements.textArea.querySelector('p');
-        this.elements.micButton = this.createMicButton();
+    private async waitForTextArea(retryCount = 0): Promise<void> {
+        const textarea = document.getElementById('prompt-textarea');
 
-        this.setupEventListeners();
-        this.injectStyles();
+        if (textarea) {
+            this.elements.textArea = textarea as HTMLTextAreaElement;
+            return;
+        }
+
+        if (retryCount >= this.MAX_RETRIES) {
+            throw new Error('Failed to find textarea after maximum retries');
+        }
+
+        // Exponential backoff
+        const delay = this.INITIAL_RETRY_DELAY * Math.pow(2, retryCount);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        return this.waitForTextArea(retryCount + 1);
+    }
+
+    private initMutationObserver(): void {
+        const observer = new MutationObserver((mutations) => {
+            const shouldAddMic = mutations.some(mutation =>
+                mutation.type === 'childList' &&
+                mutation.addedNodes.length > 0 &&
+                !document.querySelector(`#${MIC_BUTTON_ID}`) &&
+                !this.isMicRunning &&
+                document.getElementById('prompt-textarea')
+            );
+
+            if (shouldAddMic) {
+                this.retryCount = 0; // Reset retry count
+                this.initializeMic();
+            }
+        });
+
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+    }
+
+    async initializeMic(): Promise<void> {
+        try {
+            this.isMicRunning = true;
+            await this.waitForTextArea();
+
+            if (!this.elements.textArea) {
+                throw new Error('TextArea not found');
+            }
+
+            this.elements.micButton = this.createMicButton();
+            this.speechToTextInput = this.initializeSpeechToText();
+            await this.loadMicButtonStyles();
+            this.addMicButtonToTextArea();
+
+        } catch (error) {
+            console.error('Failed to initialize mic:', error);
+
+            if (this.retryCount < this.MAX_RETRIES) {
+                this.retryCount++;
+                const delay = this.INITIAL_RETRY_DELAY * Math.pow(2, this.retryCount);
+                setTimeout(() => this.initializeMic(), delay);
+            }
+        } finally {
+            this.isMicRunning = false;
+        }
     }
 
     private updateText(text: string): void {
@@ -75,5 +144,12 @@ class SpeechToTextManager {
     // ... rest of the implementation
 }
 
-// Initialize the manager
-new SpeechToTextManager();
+// Initialize immediately and add event listeners
+const initializeManager = async () => {
+    const manager = new SpeechToTextManager();
+    await manager.initialize();
+    window.addEventListener('resize', () => manager.addMic());
+    manager.initMutationObserver();
+};
+
+initializeManager();
