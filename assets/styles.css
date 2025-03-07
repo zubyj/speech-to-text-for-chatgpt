@@ -13,6 +13,26 @@
     /* Added to ensure pseudo-elements are not clipped */
     z-index: 1;
     /* Added to keep mic button above the rings */
+    transition: transform 0.2s ease-in-out, filter 0.2s ease-in-out;
+}
+
+/* Add hover effect to mic button */
+#mic-button:hover {
+    transform: scale(1.1);
+    filter: brightness(1.2);
+    cursor: pointer;
+}
+
+/* Adjust hover effect when mic is active */
+#mic-button.active:hover {
+    transform: scale(1.05);
+    filter: brightness(1.1);
+}
+
+/* Ensure rings scale properly with hover */
+#mic-button:hover::before,
+#mic-button:hover::after {
+    transform: scale(1.1);
 }
 
 .wrapper-div {
