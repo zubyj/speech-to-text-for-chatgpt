@@ -128,23 +128,16 @@ class SpeechToTextManager {
     handleSpeechResult(event) {
         if (Date.now() - this.lastMicStopTime < 300) return;
 
+        // Get only the final result
         const results = Array.from(event.results);
-        let finalText = '';
-        let interimText = '';
+        const lastResult = results[results.length - 1];
 
-        // Process all results
-        for (let i = 0; i < results.length; i++) {
-            if (results[i].isFinal) {
-                finalText += results[i][0].transcript + ' ';
-            } else if (i === results.length - 1) {
-                // Only use the last interim result
-                interimText = results[i][0].transcript;
-            }
+        if (lastResult.isFinal) {
+            const transcript = lastResult[0].transcript;
+            const currentText = this.textArea.textContent || '';
+            const newText = currentText + (currentText ? ' ' : '') + transcript;
+            this.updateVisibleText(newText);
         }
-
-        // Combine final and interim text
-        const displayText = (finalText + interimText).trim();
-        this.updateVisibleText(displayText);
     }
 
     // Stops the speech recognition service.
