@@ -15,7 +15,7 @@
     "content_scripts": [
         {
             "js": [
-                "content.js"
+                "dist/bundle.js"
             ],
             "matches": [
                 "https://chat.openai.com/*",

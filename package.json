@@ -1,0 +1,11 @@
+{
+    "name": "speech-to-text-for-chatgpt",
+    "version": "0.0.5",
+    "scripts": {
+        "build": "tsc",
+        "watch": "tsc -w"
+    },
+    "devDependencies": {
+        "typescript": "^4.9.0"
+    }
+}

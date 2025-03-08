@@ -1,6 +1,4 @@
-import { SpeechManagerConfig, SpeechCallback } from '../types';
-
-export class SpeechRecognitionService {
+class SpeechRecognitionService {
     private recognition: webkitSpeechRecognition;
     private onTextCallback: SpeechCallback;
     private finalText: string = '';
@@ -16,10 +14,9 @@ export class SpeechRecognitionService {
         this.recognition.interimResults = true; // Always enable interim results
         this.recognition.lang = config.language;
 
-        let finalTranscript = '';
-
         this.recognition.onresult = (event) => {
             let interimTranscript = '';
+            let finalTranscript = '';
 
             for (let i = event.resultIndex; i < event.results.length; i++) {
                 const transcript = event.results[i][0].transcript;
@@ -30,13 +27,16 @@ export class SpeechRecognitionService {
                 }
             }
 
-            this.onTextCallback(finalTranscript + interimTranscript);
+            // Call callback with both transcripts separately
+            this.onTextCallback(finalTranscript, interimTranscript);
         };
 
         this.recognition.onend = () => {
-            finalTranscript = '';
+            this.onTextCallback('', '');
         };
 
+        // Bind the error handler
+        this.handleError = this.handleError.bind(this);
         this.recognition.onerror = this.handleError;
     }
 
