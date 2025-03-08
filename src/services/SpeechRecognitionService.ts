@@ -3,6 +3,7 @@ import { SpeechManagerConfig, SpeechCallback } from '../types';
 export class SpeechRecognitionService {
     private recognition: webkitSpeechRecognition;
     private onTextCallback: SpeechCallback;
+    private finalText: string = '';
 
     constructor(config: SpeechManagerConfig, callback: SpeechCallback) {
         this.recognition = new webkitSpeechRecognition();
@@ -12,15 +13,28 @@ export class SpeechRecognitionService {
 
     private setupRecognition(config: SpeechManagerConfig) {
         this.recognition.continuous = config.continuous;
-        this.recognition.interimResults = config.interimResults;
+        this.recognition.interimResults = true; // Always enable interim results
         this.recognition.lang = config.language;
 
+        let finalTranscript = '';
+
         this.recognition.onresult = (event) => {
-            let transcript = '';
-            for (let i = 0; i < event.results.length; i++) {
-                transcript += event.results[i][0].transcript;
+            let interimTranscript = '';
+
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+                const transcript = event.results[i][0].transcript;
+                if (event.results[i].isFinal) {
+                    finalTranscript += transcript + ' ';
+                } else {
+                    interimTranscript += transcript;
+                }
             }
-            this.onTextCallback(transcript);
+
+            this.onTextCallback(finalTranscript + interimTranscript);
+        };
+
+        this.recognition.onend = () => {
+            finalTranscript = '';
         };
 
         this.recognition.onerror = this.handleError;
