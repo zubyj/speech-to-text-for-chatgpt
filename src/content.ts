@@ -20,21 +20,41 @@ class SpeechToTextManager {
     private updateText(finalText: string, interimText: string): void {
         if (!this.elements.textArea || !this.elements.interimDisplay) return;
 
-        // Get the paragraph element or create one if it doesn't exist
         let paragraphElement = this.elements.textArea.querySelector('p');
         if (!paragraphElement) {
             paragraphElement = document.createElement('p');
             this.elements.textArea.appendChild(paragraphElement);
         }
 
-        // Update the text content
         if (finalText) {
-            const currentText = paragraphElement.textContent || '';
-            const cursorPosition = this.getCaretPosition(paragraphElement);
-            const newText = this.insertTextAtPosition(currentText, finalText, cursorPosition);
-            paragraphElement.textContent = newText;
+            const selection = window.getSelection();
+            const range = selection?.getRangeAt(0);
 
-            // Trigger input event for ChatGPT to recognize the change
+            if (selection && range && paragraphElement.contains(range.commonAncestorContainer)) {
+                // Get the current cursor position
+                const currentPos = range.startOffset;
+                const currentText = paragraphElement.textContent || '';
+
+                // Insert new text at cursor position
+                const newText = currentText.slice(0, currentPos) +
+                    finalText +
+                    currentText.slice(currentPos);
+
+                // Update content
+                paragraphElement.textContent = newText;
+
+                // Restore cursor position after the inserted text
+                const newRange = document.createRange();
+                newRange.setStart(paragraphElement.firstChild || paragraphElement, currentPos + finalText.length);
+                newRange.collapse(true);
+                selection.removeAllRanges();
+                selection.addRange(newRange);
+            } else {
+                // Fallback: append to end if no valid cursor position
+                paragraphElement.textContent = (paragraphElement.textContent || '') + finalText;
+            }
+
+            // Trigger input event
             const inputEvent = new InputEvent('input', {
                 bubbles: true,
                 cancelable: true,
@@ -44,7 +64,7 @@ class SpeechToTextManager {
             this.elements.textArea.dispatchEvent(inputEvent);
         }
 
-        // Show/hide and update interim display
+        // Update interim display
         if (interimText) {
             this.elements.interimDisplay.textContent = interimText;
             this.elements.interimDisplay.style.display = 'block';
