@@ -264,7 +264,7 @@ class SpeechToTextManager {
     private createMicButton(): HTMLButtonElement {
         const button = document.createElement('button');
         button.id = this.MIC_BUTTON_ID;
-        button.className = 'speech-to-text-button';
+        button.className = 'flex h-9 min-w-8 items-center justify-center rounded-full border p-2 text-[13px] font-medium text-token-text-secondary border-token-border-light hover:bg-token-main-surface-secondary';
         button.type = 'button';
         button.setAttribute('aria-label', 'Toggle speech to text');
 
@@ -272,8 +272,8 @@ class SpeechToTextManager {
         const micIcon = document.createElement('img');
         micIcon.src = chrome.runtime.getURL('assets/mic.png');
         micIcon.alt = 'Microphone';
-        micIcon.style.width = '16px';  // Make icon smaller
-        micIcon.style.height = '16px';
+        micIcon.style.width = '18px';
+        micIcon.style.height = '18px';
         button.appendChild(micIcon);
 
         button.addEventListener('click', this.toggleSpeech);
@@ -293,35 +293,8 @@ class SpeechToTextManager {
     private injectStyles(): void {
         const style = document.createElement('style');
         style.textContent = `
-            #${this.MIC_BUTTON_ID} {
-                background-repeat: no-repeat;
-                background-size: 16px;
-                justify-content: center;
-                width: 28px;
-                height: 28px;
-                position: absolute;
-                left: 10px;
-                top: 50%;
-                transform: translateY(-50%);
-                overflow: visible;
-                z-index: 2;
-                border: .5px solid grey;
-                border-radius: 50%;
-                background-color: transparent;
-                background-position: center;
-                cursor: pointer;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }
-
-            #${this.MIC_BUTTON_ID}:hover {
-                filter: brightness(1.2);
-                background-color: #424242;
-            }
-
             #${this.MIC_BUTTON_ID}.active {
-                animation: breathing 2s infinite;
+                background-color: rgba(0, 0, 0, 0.1);
             }
 
             #${this.MIC_BUTTON_ID}.active::before,
@@ -352,17 +325,15 @@ class SpeechToTextManager {
     private addMicButtonToTextArea(): void {
         if (!this.elements.textArea || !this.elements.micButton) return;
 
-        const textAreaContainer = this.elements.textArea.parentElement;
-        if (!textAreaContainer) return;
+        // Find the flex container
+        const flexContainer = document.querySelector('.flex.gap-x-1\\.5');
+        if (!flexContainer) return;
 
-        // Remove existing button if present
-        const existingButton = document.querySelector(`#${this.MIC_BUTTON_ID}`);
-        if (existingButton) {
-            existingButton.remove();
+        // Insert after the first child
+        const firstChild = flexContainer.firstChild;
+        if (firstChild) {
+            flexContainer.insertBefore(this.elements.micButton, firstChild.nextSibling);
         }
-
-        textAreaContainer.style.position = 'relative';
-        textAreaContainer.appendChild(this.elements.micButton);
     }
 
     private initializeSpeechToText(): void {
