@@ -16,6 +16,7 @@ class SpeechToTextManager {
         lastStopTime: 0
     };
     private isMicRunning = false;
+    private lastKnownPosition: number = 0;
 
     private updateText(finalText: string, interimText: string): void {
         if (!this.elements.textArea || !this.elements.interimDisplay) return;
@@ -29,44 +30,55 @@ class SpeechToTextManager {
         if (finalText) {
             const selection = window.getSelection();
             const range = selection?.getRangeAt(0);
+            const currentText = paragraphElement.textContent || '';
+            const currentLength = currentText.length;
 
             console.group('Text Update Operation');
-            console.log('Before Update:', {
-                text: paragraphElement.textContent,
-                cursorAt: range?.startOffset || 'no cursor',
-                textLength: paragraphElement.textContent?.length || 0
+
+            // Determine if we have an active user-placed cursor
+            const hasValidSelection = selection &&
+                range &&
+                paragraphElement.contains(range.commonAncestorContainer) &&
+                range.startOffset !== 1; // Ignore ProseMirror's default offset of 1
+
+            // Get insertion position
+            let insertPosition;
+            if (hasValidSelection) {
+                insertPosition = range.startOffset;
+                this.lastKnownPosition = insertPosition;
+            } else {
+                // Use last known position or end of text
+                insertPosition = this.lastKnownPosition || currentLength;
+            }
+
+            console.log('Position Analysis:', {
+                hasValidSelection,
+                rangeOffset: range?.startOffset,
+                lastKnownPosition: this.lastKnownPosition,
+                currentLength,
+                chosenPosition: insertPosition
             });
 
-            if (selection && range && paragraphElement.contains(range.commonAncestorContainer)) {
-                const currentPos = range.startOffset;
-                const currentText = paragraphElement.textContent || '';
+            const newText = currentText.slice(0, insertPosition) +
+                finalText +
+                currentText.slice(insertPosition);
 
-                const newText = currentText.slice(0, currentPos) +
-                    finalText +
-                    currentText.slice(currentPos);
+            // Update content
+            paragraphElement.textContent = newText;
 
-                // Update content
-                paragraphElement.textContent = newText;
+            // Update last known position
+            this.lastKnownPosition = insertPosition + finalText.length;
 
-                // Restore cursor position after the inserted text
-                const newPos = currentPos + finalText.length;
+            // Set cursor position
+            try {
+                const textNode = paragraphElement.firstChild || paragraphElement;
                 const newRange = document.createRange();
-                newRange.setStart(paragraphElement.firstChild || paragraphElement, newPos);
-                newRange.collapse(true);
-                selection.removeAllRanges();
-                selection.addRange(newRange);
-
-                console.log('Cursor Operation:', {
-                    originalPosition: currentPos,
-                    insertedTextLength: finalText.length,
-                    newPosition: newPos
-                });
-            } else {
-                console.log('Fallback Mode:', {
-                    reason: 'No valid cursor position',
-                    action: 'Appending to end'
-                });
-                paragraphElement.textContent = (paragraphElement.textContent || '') + finalText;
+                newRange.setStart(textNode, this.lastKnownPosition);
+                newRange.setEnd(textNode, this.lastKnownPosition);
+                selection?.removeAllRanges();
+                selection?.addRange(newRange);
+            } catch (error) {
+                console.error('Cursor position error:', error);
             }
 
             console.log('After Update:', {
@@ -123,6 +135,7 @@ class SpeechToTextManager {
         if (this.elements.interimDisplay) {
             this.elements.interimDisplay.style.display = 'none';
         }
+        this.lastKnownPosition = 0; // Reset position when stopping
     }
 
     constructor() {

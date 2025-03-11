@@ -57,7 +57,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 class SpeechToTextManager {
     updateText(finalText, interimText) {
-        var _a, _b, _c, _d;
+        var _a, _b, _c;
         if (!this.elements.textArea || !this.elements.interimDisplay)
             return;
         let paragraphElement = this.elements.textArea.querySelector('p');
@@ -68,44 +68,54 @@ class SpeechToTextManager {
         if (finalText) {
             const selection = window.getSelection();
             const range = selection === null || selection === void 0 ? void 0 : selection.getRangeAt(0);
+            const currentText = paragraphElement.textContent || '';
+            const currentLength = currentText.length;
             console.group('Text Update Operation');
-            console.log('Before Update:', {
-                text: paragraphElement.textContent,
-                cursorAt: (range === null || range === void 0 ? void 0 : range.startOffset) || 'no cursor',
-                textLength: ((_a = paragraphElement.textContent) === null || _a === void 0 ? void 0 : _a.length) || 0
-            });
-            if (selection && range && paragraphElement.contains(range.commonAncestorContainer)) {
-                const currentPos = range.startOffset;
-                const currentText = paragraphElement.textContent || '';
-                const newText = currentText.slice(0, currentPos) +
-                    finalText +
-                    currentText.slice(currentPos);
-                // Update content
-                paragraphElement.textContent = newText;
-                // Restore cursor position after the inserted text
-                const newPos = currentPos + finalText.length;
-                const newRange = document.createRange();
-                newRange.setStart(paragraphElement.firstChild || paragraphElement, newPos);
-                newRange.collapse(true);
-                selection.removeAllRanges();
-                selection.addRange(newRange);
-                console.log('Cursor Operation:', {
-                    originalPosition: currentPos,
-                    insertedTextLength: finalText.length,
-                    newPosition: newPos
-                });
+            // Determine if we have an active user-placed cursor
+            const hasValidSelection = selection &&
+                range &&
+                paragraphElement.contains(range.commonAncestorContainer) &&
+                range.startOffset !== 1; // Ignore ProseMirror's default offset of 1
+            // Get insertion position
+            let insertPosition;
+            if (hasValidSelection) {
+                insertPosition = range.startOffset;
+                this.lastKnownPosition = insertPosition;
             }
             else {
-                console.log('Fallback Mode:', {
-                    reason: 'No valid cursor position',
-                    action: 'Appending to end'
-                });
-                paragraphElement.textContent = (paragraphElement.textContent || '') + finalText;
+                // Use last known position or end of text
+                insertPosition = this.lastKnownPosition || currentLength;
+            }
+            console.log('Position Analysis:', {
+                hasValidSelection,
+                rangeOffset: range === null || range === void 0 ? void 0 : range.startOffset,
+                lastKnownPosition: this.lastKnownPosition,
+                currentLength,
+                chosenPosition: insertPosition
+            });
+            const newText = currentText.slice(0, insertPosition) +
+                finalText +
+                currentText.slice(insertPosition);
+            // Update content
+            paragraphElement.textContent = newText;
+            // Update last known position
+            this.lastKnownPosition = insertPosition + finalText.length;
+            // Set cursor position
+            try {
+                const textNode = paragraphElement.firstChild || paragraphElement;
+                const newRange = document.createRange();
+                newRange.setStart(textNode, this.lastKnownPosition);
+                newRange.setEnd(textNode, this.lastKnownPosition);
+                selection === null || selection === void 0 ? void 0 : selection.removeAllRanges();
+                selection === null || selection === void 0 ? void 0 : selection.addRange(newRange);
+            }
+            catch (error) {
+                console.error('Cursor position error:', error);
             }
             console.log('After Update:', {
                 text: paragraphElement.textContent,
-                cursorAt: ((_c = (_b = window.getSelection()) === null || _b === void 0 ? void 0 : _b.getRangeAt(0)) === null || _c === void 0 ? void 0 : _c.startOffset) || 'no cursor',
-                textLength: ((_d = paragraphElement.textContent) === null || _d === void 0 ? void 0 : _d.length) || 0
+                cursorAt: ((_b = (_a = window.getSelection()) === null || _a === void 0 ? void 0 : _a.getRangeAt(0)) === null || _b === void 0 ? void 0 : _b.startOffset) || 'no cursor',
+                textLength: ((_c = paragraphElement.textContent) === null || _c === void 0 ? void 0 : _c.length) || 0
             });
             console.groupEnd();
             // Trigger input event
@@ -143,6 +153,7 @@ class SpeechToTextManager {
             lastStopTime: 0
         };
         this.isMicRunning = false;
+        this.lastKnownPosition = 0;
         this.toggleSpeech = (event) => {
             event.preventDefault();
             if (this.state.isListening) {
@@ -174,6 +185,7 @@ class SpeechToTextManager {
             if (this.elements.interimDisplay) {
                 this.elements.interimDisplay.style.display = 'none';
             }
+            this.lastKnownPosition = 0; // Reset position when stopping
         };
         const config = {
             language: 'en-US',
