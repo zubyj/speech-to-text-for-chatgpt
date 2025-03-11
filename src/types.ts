@@ -2,6 +2,9 @@ export interface SpeechManagerConfig {
     language: string;
     continuous: boolean;
     interimResults: boolean;
+    onError?: (message: string) => void;
+    onMicActivity?: (isActive: boolean) => void;
+    onEnd?: () => void;
 }
 
 export interface UIElements {

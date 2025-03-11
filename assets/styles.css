@@ -1,0 +1,84 @@
+#mic-button {
+    background-repeat: no-repeat;
+    background-size: 20px;
+    /* smaller image size to create padding effect */
+    justify-content: center;
+    width: 32px;
+    /* increased size to accommodate padding */
+    height: 32px;
+    position: relative;
+    /* bottom: 6px; */
+    /* Added to make the position of pseudo-elements relative to mic-button */
+    overflow: visible;
+    /* Added to ensure pseudo-elements are not clipped */
+    z-index: 1;
+    border: .5px solid grey;
+    border-radius: 50%;
+    background-color: transparent;
+    background-position: center;
+}
+
+/* Add hover effect to mic button */
+#mic-button:hover {
+    filter: brightness(1.2);
+    cursor: pointer;
+    background-color: #424242;
+}
+
+/* Adjust hover effect when mic is active */
+#mic-button.active:hover {
+    filter: brightness(1.1);
+}
+
+
+.wrapper-div {
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    align-items: flex-end;
+}
+
+/* Animation for the rings */
+@keyframes ring {
+    0% {
+        transform: scale(0.5);
+        opacity: 0.5;
+    }
+
+    100% {
+        transform: scale(1.5);
+        opacity: 0;
+    }
+}
+
+/* Add ring effect when mic-button is active */
+#mic-button.active {
+    animation: breathing 2s infinite;
+}
+
+#mic-button.active::before,
+#mic-button.active::after {
+    content: "";
+    /* Necessary to create the pseudo-element */
+    position: absolute;
+    top: -5px;
+    /* Adjust these values to center the rings around the button */
+    left: -5px;
+    /* Adjust these values to center the rings around the button */
+    width: calc(100% + 10px);
+    /* Make the ring larger than the button */
+    height: calc(100% + 10px);
+    /* Make the ring larger than the button */
+    border-radius: 50%;
+    /* Make the ring circular */
+    border: 2px solid green;
+    /* Adjust the color and thickness of the ring */
+    animation: ring 1s infinite;
+    /* Add the ring animation */
+}
+
+/* Create a second ring with a delay to create a layered effect */
+#mic-button.active::after {
+    animation-delay: 0.5s;
+    /* Delay the second ring */
+}

@@ -116,36 +116,68 @@ class SpeechToTextManager {
         }
     }
 
-    private startListening = (): void => {
+    private async startListening(): Promise<void> {
         if (!this.speechService) return;
-        this.state.isListening = true;
-        // Get the current text content from the contenteditable div
-        const paragraphElement = this.elements.textArea?.querySelector('p');
-        this.state.previousText = paragraphElement?.textContent || '';
-        this.elements.micButton?.classList.add('active');
-        this.speechService.start();
+
+        try {
+            this.state.isListening = true;
+            await this.speechService.start();
+            this.elements.micButton?.classList.add('active');
+        } catch (error) {
+            this.state.isListening = false;
+            this.elements.micButton?.classList.remove('active');
+            // Show error toast or notification
+        }
     }
 
     private stopListening = (): void => {
         if (!this.speechService) return;
+
         this.state.isListening = false;
         this.state.lastStopTime = Date.now();
         this.elements.micButton?.classList.remove('active');
+        this.elements.micButton?.classList.remove('speaking');
         this.speechService.stop();
+
         if (this.elements.interimDisplay) {
             this.elements.interimDisplay.style.display = 'none';
         }
-        this.lastKnownPosition = 0; // Reset position when stopping
+        this.lastKnownPosition = 0;
+    }
+
+    private handleError = (message: string): void => {
+        // Remove active state and stop listening
+        this.stopListening();
+
+        // Show error message to user
+        const toast = new Toast();
+        toast.show(message, 'error');
+    }
+
+    private handleMicActivity = (isActive: boolean): void => {
+        if (!this.elements.micButton) return;
+
+        if (isActive) {
+            this.elements.micButton.classList.add('speaking');
+        } else {
+            this.elements.micButton.classList.remove('speaking');
+        }
     }
 
     constructor() {
         const config: SpeechManagerConfig = {
             language: 'en-US',
             continuous: true,
-            interimResults: true
+            interimResults: true,
+            onMicActivity: this.handleMicActivity,
+            onEnd: () => this.stopListening() // Add onEnd handler
         };
 
-        this.speechService = new SpeechRecognitionService(config, this.updateText.bind(this));
+        this.speechService = new SpeechRecognitionService(
+            config,
+            this.updateText.bind(this),
+            this.handleError // Add error handler
+        );
         this.initialize();
     }
 
@@ -205,7 +237,7 @@ class SpeechToTextManager {
             throw new Error('Failed to find textarea after maximum retries');
         }
 
-        // Exponential backoff
+        // Exponential backoff &&
         const delay = this.INITIAL_RETRY_DELAY * Math.pow(2, retryCount);
         await new Promise(resolve => setTimeout(resolve, delay));
         return this.waitForTextArea(retryCount + 1);
@@ -268,27 +300,28 @@ class SpeechToTextManager {
 
     private injectStyles(): void {
         const style = document.createElement('style');
+        const buttonId = this.MIC_BUTTON_ID; // Store ID to use in template literal
+
         style.textContent = `
-            #${this.MIC_BUTTON_ID} {
+            #${buttonId} {
                 position: relative;
                 overflow: visible;
                 transition: all 0.2s ease;
                 filter: ${this.isLightMode() ? 'brightness(0.98)' : 'none'};
             }
 
-            #${this.MIC_BUTTON_ID}:hover {
+            #${buttonId}:hover {
                 background-color: ${this.isLightMode()
-                ? 'rgba(0, 0, 0, 0.07)' // Made darker from 0.05 to 0.07
-                : 'rgb(64, 65, 79)' // This is equivalent to tailwind's gray-700
-            };
+                ? 'rgba(0, 0, 0, 0.07)'
+                : 'rgb(64, 65, 79)'};
             }
 
-            #${this.MIC_BUTTON_ID}.active {
+            #${buttonId}.active {
                 background-color: rgba(0, 0, 0, 0.08);
             }
 
-            #${this.MIC_BUTTON_ID}.active::before,
-            #${this.MIC_BUTTON_ID}.active::after {
+            #${buttonId}.active::before,
+            #${buttonId}.active::after {
                 content: "";
                 position: absolute;
                 top: 50%;
@@ -302,8 +335,18 @@ class SpeechToTextManager {
                 pointer-events: none;
             }
 
-            #${this.MIC_BUTTON_ID}.active::after {
+            #${buttonId}.active::after {
                 animation-delay: 0.6s;
+            }
+
+            #${buttonId}.speaking {
+                background-color: rgba(16, 163, 127, 0.1) !important;
+            }
+
+            #${buttonId}.speaking::before,
+            #${buttonId}.speaking::after {
+                border-color: #10a37f !important;
+                animation: pulseRing 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite !important;
             }
 
             @keyframes pulseRing {
@@ -324,10 +367,6 @@ class SpeechToTextManager {
                 }
             }
 
-            #${this.MIC_BUTTON_ID}.active img {
-                animation: pulseMic 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-            }
-
             @keyframes pulseMic {
                 0%, 100% {
                     opacity: 1;
@@ -339,25 +378,7 @@ class SpeechToTextManager {
         `;
         document.head.appendChild(style);
 
-        // Update theme observer to handle icon brightness too
-        const observer = new MutationObserver(() => {
-            const isLight = this.isLightMode();
-            if (this.elements.micButton) {
-                this.elements.micButton.style.filter = isLight ? 'brightness(0.98)' : 'none';
-                const micIcon = this.elements.micButton.querySelector('img');
-                if (micIcon) {
-                    micIcon.style.filter = isLight ? 'brightness(0.4)' : 'none';
-                }
-                this.elements.micButton.style.setProperty('--hover-bg',
-                    isLight ? 'rgba(0, 0, 0, 0.07)' : 'rgb(64, 65, 79)'
-                );
-            }
-        });
-
-        observer.observe(document.documentElement, {
-            attributes: true,
-            attributeFilter: ['class']
-        });
+        // ...existing observer code...
     }
 
     private addMicButtonToTextArea(): void {
@@ -383,22 +404,19 @@ class SpeechToTextManager {
         return Promise.resolve();
     }
 
-    private getCaretPosition(element: Node): number {
-        const selection = window.getSelection();
-        if (!selection || !selection.rangeCount) return 0;
-
-        const range = selection.getRangeAt(0);
-        if (!element.contains(range.commonAncestorContainer)) return 0;
-
-        return range.endOffset;
-    }
-
     private insertTextAtPosition(currentText: string, newText: string, position: number): string {
         return currentText.slice(0, position) + newText + currentText.slice(position);
     }
+
+    private getCaretPosition(element: Node): number {
+        const selection = window.getSelection();
+        if (!selection || !selection.rangeCount) return 0;
+        const range = selection.getRangeAt(0);
+        if (!element.contains(range.commonAncestorContainer)) return 0;
+        return range.endOffset;
+    }
 }
 
-// Initialize immediately and setup observer
 (() => {
     console.log('Starting speech-to-text initialization...');
     const manager = new SpeechToTextManager();
