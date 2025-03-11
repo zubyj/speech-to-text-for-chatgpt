@@ -185,18 +185,6 @@ class SpeechToTextManager {
         const interim = document.createElement('div');
         interim.id = 'interim-display';
         interim.className = 'interim-results';
-        interim.style.cssText = `
-            position: absolute;
-            bottom: 100%;
-            left: 0;
-            width: 100%;
-            padding: 8px;
-            background: rgba(0, 0, 0, 0.05);
-            border-radius: 6px;
-            margin-bottom: 4px;
-            font-style: italic;
-            display: none;
-        `;
         return interim;
     }
 
@@ -299,14 +287,18 @@ class SpeechToTextManager {
     }
 
     private injectStyles(): void {
+        // Load the CSS file from the extension
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = chrome.runtime.getURL('assets/styles.css');
+        document.head.appendChild(link);
+        
+        // Only inject theme-dependent styles
         const style = document.createElement('style');
-        const buttonId = this.MIC_BUTTON_ID; // Store ID to use in template literal
+        const buttonId = this.MIC_BUTTON_ID;
 
         style.textContent = `
             #${buttonId} {
-                position: relative;
-                overflow: visible;
-                transition: all 0.2s ease;
                 filter: ${this.isLightMode() ? 'brightness(0.98)' : 'none'};
             }
 
@@ -315,70 +307,8 @@ class SpeechToTextManager {
                 ? 'rgba(0, 0, 0, 0.07)'
                 : 'rgb(64, 65, 79)'};
             }
-
-            #${buttonId}.active {
-                background-color: rgba(0, 0, 0, 0.08);
-            }
-
-            #${buttonId}.active::before,
-            #${buttonId}.active::after {
-                content: "";
-                position: absolute;
-                top: 50%;
-                left: 50%;
-                width: 100%;
-                height: 100%;
-                border-radius: 50%;
-                border: 2px solid #10a37f;
-                animation: pulseRing 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-                transform: translate(-50%, -50%);
-                pointer-events: none;
-            }
-
-            #${buttonId}.active::after {
-                animation-delay: 0.6s;
-            }
-
-            #${buttonId}.speaking {
-                background-color: rgba(16, 163, 127, 0.1) !important;
-            }
-
-            #${buttonId}.speaking::before,
-            #${buttonId}.speaking::after {
-                border-color: #10a37f !important;
-                animation: pulseRing 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite !important;
-            }
-
-            @keyframes pulseRing {
-                0% {
-                    width: 100%;
-                    height: 100%;
-                    opacity: 0.8;
-                    border-color: #10a37f;
-                }
-                50% {
-                    opacity: 0;
-                }
-                100% {
-                    width: 180%;
-                    height: 180%;
-                    opacity: 0;
-                    border-color: transparent;
-                }
-            }
-
-            @keyframes pulseMic {
-                0%, 100% {
-                    opacity: 1;
-                }
-                50% {
-                    opacity: 0.7;
-                }
-            }
         `;
         document.head.appendChild(style);
-
-        // ...existing observer code...
     }
 
     private addMicButtonToTextArea(): void {
@@ -395,30 +325,11 @@ class SpeechToTextManager {
         }
     }
 
-    private initializeSpeechToText(): void {
-        // Already initialized in constructor
-        return;
-    }
-
-    private loadMicButtonStyles(): Promise<void> {
-        return Promise.resolve();
-    }
-
-    private insertTextAtPosition(currentText: string, newText: string, position: number): string {
-        return currentText.slice(0, position) + newText + currentText.slice(position);
-    }
-
-    private getCaretPosition(element: Node): number {
-        const selection = window.getSelection();
-        if (!selection || !selection.rangeCount) return 0;
-        const range = selection.getRangeAt(0);
-        if (!element.contains(range.commonAncestorContainer)) return 0;
-        return range.endOffset;
-    }
 }
 
 (() => {
     console.log('Starting speech-to-text initialization...');
     const manager = new SpeechToTextManager();
+    // Add the mutation observer to watch for DOM changes
     manager.initMutationObserver();
 })();

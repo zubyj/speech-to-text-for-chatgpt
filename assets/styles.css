@@ -1,84 +1,84 @@
-#mic-button {
-    background-repeat: no-repeat;
-    background-size: 20px;
-    /* smaller image size to create padding effect */
-    justify-content: center;
-    width: 32px;
-    /* increased size to accommodate padding */
-    height: 32px;
+#speech-to-text-button {
     position: relative;
-    /* bottom: 6px; */
-    /* Added to make the position of pseudo-elements relative to mic-button */
     overflow: visible;
-    /* Added to ensure pseudo-elements are not clipped */
-    z-index: 1;
-    border: .5px solid grey;
+    transition: all 0.2s ease;
+}
+
+#speech-to-text-button.active {
+    background-color: rgba(0, 0, 0, 0.08);
+}
+
+#speech-to-text-button.active::before,
+#speech-to-text-button.active::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 100%;
+    height: 100%;
     border-radius: 50%;
-    background-color: transparent;
-    background-position: center;
+    border: 2px solid #10a37f;
+    animation: pulseRing 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
 }
 
-/* Add hover effect to mic button */
-#mic-button:hover {
-    filter: brightness(1.2);
-    cursor: pointer;
-    background-color: #424242;
+#speech-to-text-button.active::after {
+    animation-delay: 0.6s;
 }
 
-/* Adjust hover effect when mic is active */
-#mic-button.active:hover {
-    filter: brightness(1.1);
+#speech-to-text-button.speaking {
+    background-color: rgba(16, 163, 127, 0.1) !important;
 }
 
-
-.wrapper-div {
-    position: relative;
-    display: flex;
-    flex-direction: row;
-    align-items: flex-end;
+#speech-to-text-button.speaking::before,
+#speech-to-text-button.speaking::after {
+    border-color: #10a37f !important;
+    animation: pulseRing 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite !important;
 }
 
-/* Animation for the rings */
-@keyframes ring {
+@keyframes pulseRing {
     0% {
-        transform: scale(0.5);
-        opacity: 0.5;
+        width: 100%;
+        height: 100%;
+        opacity: 0.8;
+        border-color: #10a37f;
+    }
+
+    50% {
+        opacity: 0;
     }
 
     100% {
-        transform: scale(1.5);
+        width: 180%;
+        height: 180%;
         opacity: 0;
+        border-color: transparent;
     }
 }
 
-/* Add ring effect when mic-button is active */
-#mic-button.active {
-    animation: breathing 2s infinite;
+@keyframes pulseMic {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.7;
+    }
 }
 
-#mic-button.active::before,
-#mic-button.active::after {
-    content: "";
-    /* Necessary to create the pseudo-element */
+/* Interim display styles */
+.interim-results {
     position: absolute;
-    top: -5px;
-    /* Adjust these values to center the rings around the button */
-    left: -5px;
-    /* Adjust these values to center the rings around the button */
-    width: calc(100% + 10px);
-    /* Make the ring larger than the button */
-    height: calc(100% + 10px);
-    /* Make the ring larger than the button */
-    border-radius: 50%;
-    /* Make the ring circular */
-    border: 2px solid green;
-    /* Adjust the color and thickness of the ring */
-    animation: ring 1s infinite;
-    /* Add the ring animation */
-}
-
-/* Create a second ring with a delay to create a layered effect */
-#mic-button.active::after {
-    animation-delay: 0.5s;
-    /* Delay the second ring */
+    bottom: 100%;
+    left: 0;
+    width: 100%;
+    padding: 8px;
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 6px;
+    margin-bottom: 4px;
+    font-style: italic;
+    display: none;
 }
