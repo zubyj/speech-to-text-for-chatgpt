@@ -222,12 +222,13 @@ class SpeechToTextManager {
                 console.log('Found textarea:', this.elements.textArea);
                 this.elements.micButton = this.createMicButton();
                 this.elements.interimDisplay = this.createInterimDisplay();
+                // Only append the interim display to the textarea container
                 const textAreaContainer = (_a = this.elements.textArea) === null || _a === void 0 ? void 0 : _a.parentElement;
                 if (textAreaContainer) {
                     console.log('Adding elements to container');
                     textAreaContainer.style.position = 'relative';
-                    textAreaContainer.appendChild(this.elements.micButton);
                     textAreaContainer.appendChild(this.elements.interimDisplay);
+                    this.addMicButtonToTextArea(); // This will add the button to the flex container
                 }
                 else {
                     console.error('No textarea container found');
@@ -327,6 +328,11 @@ class SpeechToTextManager {
     injectStyles() {
         const style = document.createElement('style');
         style.textContent = `
+            #${this.MIC_BUTTON_ID} {
+                position: relative;
+                overflow: visible;
+            }
+
             #${this.MIC_BUTTON_ID}.active {
                 background-color: rgba(0, 0, 0, 0.1);
             }
@@ -335,13 +341,15 @@ class SpeechToTextManager {
             #${this.MIC_BUTTON_ID}.active::after {
                 content: "";
                 position: absolute;
-                top: -5px;
-                left: -5px;
+                top: 50%;
+                left: 50%;
                 width: calc(100% + 10px);
                 height: calc(100% + 10px);
                 border-radius: 50%;
                 border: 2px solid green;
                 animation: ring 1s infinite;
+                transform: translate(-50%, -50%);
+                pointer-events: none;
             }
 
             #${this.MIC_BUTTON_ID}.active::after {
@@ -349,8 +357,16 @@ class SpeechToTextManager {
             }
 
             @keyframes ring {
-                0% { transform: scale(0.5); opacity: 0.5; }
-                100% { transform: scale(1.5); opacity: 0; }
+                0% { 
+                    width: 100%;
+                    height: 100%;
+                    opacity: 0.5;
+                }
+                100% { 
+                    width: calc(100% + 20px);
+                    height: calc(100% + 20px);
+                    opacity: 0;
+                }
             }
         `;
         document.head.appendChild(style);

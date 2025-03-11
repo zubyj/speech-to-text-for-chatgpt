@@ -181,7 +181,6 @@ class SpeechToTextManager {
             if (textAreaContainer) {
                 console.log('Adding elements to container');
                 textAreaContainer.style.position = 'relative';
-                textAreaContainer.appendChild(this.elements.micButton);
                 textAreaContainer.appendChild(this.elements.interimDisplay);
             } else {
                 console.error('No textarea container found');
@@ -218,13 +217,11 @@ class SpeechToTextManager {
                 mutation.type === 'childList' &&
                 mutation.addedNodes.length > 0 &&
                 !document.querySelector(`#${this.MIC_BUTTON_ID}`) &&
-                !this.isMicRunning &&
                 document.getElementById('prompt-textarea')
             );
 
             if (shouldAddMic) {
-                this.retryCount = 0;
-                this.initializeMic();
+                this.addMicButtonToTextArea();
             }
         });
 
@@ -232,33 +229,6 @@ class SpeechToTextManager {
             childList: true,
             subtree: true
         });
-    }
-
-    async initializeMic(): Promise<void> {
-        try {
-            this.isMicRunning = true;
-            await this.waitForTextArea();
-
-            if (!this.elements.textArea) {
-                throw new Error('TextArea not found');
-            }
-
-            this.elements.micButton = this.createMicButton();
-            this.speechToTextInput = this.initializeSpeechToText();
-            await this.loadMicButtonStyles();
-            this.addMicButtonToTextArea();
-
-        } catch (error) {
-            console.error('Failed to initialize mic:', error);
-
-            if (this.retryCount < this.MAX_RETRIES) {
-                this.retryCount++;
-                const delay = this.INITIAL_RETRY_DELAY * Math.pow(2, this.retryCount);
-                setTimeout(() => this.initializeMic(), delay);
-            }
-        } finally {
-            this.isMicRunning = false;
-        }
     }
 
     private createMicButton(): HTMLButtonElement {
@@ -293,6 +263,11 @@ class SpeechToTextManager {
     private injectStyles(): void {
         const style = document.createElement('style');
         style.textContent = `
+            #${this.MIC_BUTTON_ID} {
+                position: relative;
+                overflow: visible;
+            }
+
             #${this.MIC_BUTTON_ID}.active {
                 background-color: rgba(0, 0, 0, 0.1);
             }
@@ -301,13 +276,15 @@ class SpeechToTextManager {
             #${this.MIC_BUTTON_ID}.active::after {
                 content: "";
                 position: absolute;
-                top: -5px;
-                left: -5px;
+                top: 50%;
+                left: 50%;
                 width: calc(100% + 10px);
                 height: calc(100% + 10px);
                 border-radius: 50%;
                 border: 2px solid green;
                 animation: ring 1s infinite;
+                transform: translate(-50%, -50%);
+                pointer-events: none;
             }
 
             #${this.MIC_BUTTON_ID}.active::after {
@@ -315,8 +292,16 @@ class SpeechToTextManager {
             }
 
             @keyframes ring {
-                0% { transform: scale(0.5); opacity: 0.5; }
-                100% { transform: scale(1.5); opacity: 0; }
+                0% { 
+                    width: 100%;
+                    height: 100%;
+                    opacity: 0.5;
+                }
+                100% { 
+                    width: calc(100% + 20px);
+                    height: calc(100% + 20px);
+                    opacity: 0;
+                }
             }
         `;
         document.head.appendChild(style);
