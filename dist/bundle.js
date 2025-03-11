@@ -222,13 +222,11 @@ class SpeechToTextManager {
                 console.log('Found textarea:', this.elements.textArea);
                 this.elements.micButton = this.createMicButton();
                 this.elements.interimDisplay = this.createInterimDisplay();
-                // Only append the interim display to the textarea container
                 const textAreaContainer = (_a = this.elements.textArea) === null || _a === void 0 ? void 0 : _a.parentElement;
                 if (textAreaContainer) {
                     console.log('Adding elements to container');
                     textAreaContainer.style.position = 'relative';
                     textAreaContainer.appendChild(this.elements.interimDisplay);
-                    this.addMicButtonToTextArea(); // This will add the button to the flex container
                 }
                 else {
                     console.error('No textarea container found');
@@ -262,42 +260,14 @@ class SpeechToTextManager {
             const shouldAddMic = mutations.some(mutation => mutation.type === 'childList' &&
                 mutation.addedNodes.length > 0 &&
                 !document.querySelector(`#${this.MIC_BUTTON_ID}`) &&
-                !this.isMicRunning &&
                 document.getElementById('prompt-textarea'));
             if (shouldAddMic) {
-                this.retryCount = 0;
-                this.initializeMic();
+                this.addMicButtonToTextArea();
             }
         });
         observer.observe(document.body, {
             childList: true,
             subtree: true
-        });
-    }
-    initializeMic() {
-        return __awaiter(this, void 0, void 0, function* () {
-            try {
-                this.isMicRunning = true;
-                yield this.waitForTextArea();
-                if (!this.elements.textArea) {
-                    throw new Error('TextArea not found');
-                }
-                this.elements.micButton = this.createMicButton();
-                this.speechToTextInput = this.initializeSpeechToText();
-                yield this.loadMicButtonStyles();
-                this.addMicButtonToTextArea();
-            }
-            catch (error) {
-                console.error('Failed to initialize mic:', error);
-                if (this.retryCount < this.MAX_RETRIES) {
-                    this.retryCount++;
-                    const delay = this.INITIAL_RETRY_DELAY * Math.pow(2, this.retryCount);
-                    setTimeout(() => this.initializeMic(), delay);
-                }
-            }
-            finally {
-                this.isMicRunning = false;
-            }
         });
     }
     createMicButton() {
@@ -331,10 +301,11 @@ class SpeechToTextManager {
             #${this.MIC_BUTTON_ID} {
                 position: relative;
                 overflow: visible;
+                transition: background-color 0.3s ease;
             }
 
             #${this.MIC_BUTTON_ID}.active {
-                background-color: rgba(0, 0, 0, 0.1);
+                background-color: rgba(0, 0, 0, 0.08);
             }
 
             #${this.MIC_BUTTON_ID}.active::before,
@@ -343,29 +314,47 @@ class SpeechToTextManager {
                 position: absolute;
                 top: 50%;
                 left: 50%;
-                width: calc(100% + 10px);
-                height: calc(100% + 10px);
+                width: 100%;
+                height: 100%;
                 border-radius: 50%;
-                border: 2px solid green;
-                animation: ring 1s infinite;
+                border: 2px solid #10a37f;
+                animation: pulseRing 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
                 transform: translate(-50%, -50%);
                 pointer-events: none;
             }
 
             #${this.MIC_BUTTON_ID}.active::after {
-                animation-delay: 0.5s;
+                animation-delay: 0.6s;
             }
 
-            @keyframes ring {
-                0% { 
+            @keyframes pulseRing {
+                0% {
                     width: 100%;
                     height: 100%;
-                    opacity: 0.5;
+                    opacity: 0.8;
+                    border-color: #10a37f;
                 }
-                100% { 
-                    width: calc(100% + 20px);
-                    height: calc(100% + 20px);
+                50% {
                     opacity: 0;
+                }
+                100% {
+                    width: 180%;
+                    height: 180%;
+                    opacity: 0;
+                    border-color: transparent;
+                }
+            }
+
+            #${this.MIC_BUTTON_ID}.active img {
+                animation: pulseMic 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+            }
+
+            @keyframes pulseMic {
+                0%, 100% {
+                    opacity: 1;
+                }
+                50% {
+                    opacity: 0.7;
                 }
             }
         `;

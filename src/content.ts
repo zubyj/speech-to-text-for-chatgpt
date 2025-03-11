@@ -266,10 +266,11 @@ class SpeechToTextManager {
             #${this.MIC_BUTTON_ID} {
                 position: relative;
                 overflow: visible;
+                transition: background-color 0.3s ease;
             }
 
             #${this.MIC_BUTTON_ID}.active {
-                background-color: rgba(0, 0, 0, 0.1);
+                background-color: rgba(0, 0, 0, 0.08);
             }
 
             #${this.MIC_BUTTON_ID}.active::before,
@@ -278,29 +279,47 @@ class SpeechToTextManager {
                 position: absolute;
                 top: 50%;
                 left: 50%;
-                width: calc(100% + 10px);
-                height: calc(100% + 10px);
+                width: 100%;
+                height: 100%;
                 border-radius: 50%;
-                border: 2px solid green;
-                animation: ring 1s infinite;
+                border: 2px solid #10a37f;
+                animation: pulseRing 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
                 transform: translate(-50%, -50%);
                 pointer-events: none;
             }
 
             #${this.MIC_BUTTON_ID}.active::after {
-                animation-delay: 0.5s;
+                animation-delay: 0.6s;
             }
 
-            @keyframes ring {
-                0% { 
+            @keyframes pulseRing {
+                0% {
                     width: 100%;
                     height: 100%;
-                    opacity: 0.5;
+                    opacity: 0.8;
+                    border-color: #10a37f;
                 }
-                100% { 
-                    width: calc(100% + 20px);
-                    height: calc(100% + 20px);
+                50% {
                     opacity: 0;
+                }
+                100% {
+                    width: 180%;
+                    height: 180%;
+                    opacity: 0;
+                    border-color: transparent;
+                }
+            }
+
+            #${this.MIC_BUTTON_ID}.active img {
+                animation: pulseMic 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+            }
+
+            @keyframes pulseMic {
+                0%, 100% {
+                    opacity: 1;
+                }
+                50% {
+                    opacity: 0.7;
                 }
             }
         `;
