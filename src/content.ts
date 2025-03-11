@@ -244,6 +244,7 @@ class SpeechToTextManager {
         micIcon.alt = 'Microphone';
         micIcon.style.width = '18px';
         micIcon.style.height = '18px';
+        micIcon.style.filter = this.isLightMode() ? 'brightness(0.4)' : 'none'; // Make icon darker in light mode
         button.appendChild(micIcon);
 
         button.addEventListener('click', this.toggleSpeech);
@@ -260,13 +261,26 @@ class SpeechToTextManager {
         });
     }
 
+    private isLightMode(): boolean {
+        // Check if html element has dark class
+        return !document.documentElement.classList.contains('dark');
+    }
+
     private injectStyles(): void {
         const style = document.createElement('style');
         style.textContent = `
             #${this.MIC_BUTTON_ID} {
                 position: relative;
                 overflow: visible;
-                transition: background-color 0.3s ease;
+                transition: all 0.2s ease;
+                filter: ${this.isLightMode() ? 'brightness(0.98)' : 'none'};
+            }
+
+            #${this.MIC_BUTTON_ID}:hover {
+                background-color: ${this.isLightMode() ?
+                'rgba(0, 0, 0, 0.05)' :
+                'rgba(255, 255, 255, 0.1)'
+            };
             }
 
             #${this.MIC_BUTTON_ID}.active {
@@ -324,6 +338,26 @@ class SpeechToTextManager {
             }
         `;
         document.head.appendChild(style);
+
+        // Update theme observer to handle icon brightness too
+        const observer = new MutationObserver(() => {
+            const isLight = this.isLightMode();
+            if (this.elements.micButton) {
+                this.elements.micButton.style.filter = isLight ? 'brightness(0.98)' : 'none';
+                const micIcon = this.elements.micButton.querySelector('img');
+                if (micIcon) {
+                    micIcon.style.filter = isLight ? 'brightness(0.4)' : 'none';
+                }
+                this.elements.micButton.style.setProperty('--hover-bg',
+                    isLight ? 'rgba(0, 0, 0, 0.05)' : 'rgba(255, 255, 255, 0.1)'
+                );
+            }
+        });
+
+        observer.observe(document.documentElement, {
+            attributes: true,
+            attributeFilter: ['class']
+        });
     }
 
     private addMicButtonToTextArea(): void {
