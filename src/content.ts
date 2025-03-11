@@ -233,15 +233,15 @@ class SpeechToTextManager {
         button.type = 'button';
         button.setAttribute('aria-label', 'Toggle speech to text');
 
-        // Create the mic icon
+        // Create the mic icon with specific size
         const micIcon = document.createElement('img');
         micIcon.src = chrome.runtime.getURL('assets/mic.png');
         micIcon.alt = 'Microphone';
+        micIcon.style.width = '16px';  // Make icon smaller
+        micIcon.style.height = '16px';
         button.appendChild(micIcon);
 
-        // Add click listener
         button.addEventListener('click', this.toggleSpeech);
-
         return button;
     }
 
@@ -260,10 +260,10 @@ class SpeechToTextManager {
         style.textContent = `
             #${this.MIC_BUTTON_ID} {
                 background-repeat: no-repeat;
-                background-size: 20px;
+                background-size: 16px;
                 justify-content: center;
-                width: 32px;
-                height: 32px;
+                width: 28px;
+                height: 28px;
                 position: absolute;
                 left: 10px;
                 top: 50%;
@@ -275,6 +275,9 @@ class SpeechToTextManager {
                 background-color: transparent;
                 background-position: center;
                 cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
             }
 
             #${this.MIC_BUTTON_ID}:hover {
