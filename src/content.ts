@@ -2,7 +2,6 @@ class SpeechToTextManager {
     private readonly MAX_RETRIES = 5;
     private readonly INITIAL_RETRY_DELAY = 500;
     private readonly MIC_BUTTON_ID = 'speech-to-text-button';
-    private retryCount = 0;
     private speechService: SpeechRecognitionService;
     private elements: UIElements = {
         textArea: null,
@@ -15,7 +14,6 @@ class SpeechToTextManager {
         previousText: '',
         lastStopTime: 0
     };
-    private isMicRunning = false;
     private lastKnownPosition: number = 0;
 
     private updateText(finalText: string, interimText: string): void {
@@ -33,13 +31,11 @@ class SpeechToTextManager {
             const currentText = paragraphElement.textContent || '';
             const currentLength = currentText.length;
 
-            console.group('Text Update Operation');
-
             // Determine if we have an active user-placed cursor
             const hasValidSelection = selection &&
                 range &&
                 paragraphElement.contains(range.commonAncestorContainer) &&
-                range.startOffset !== 1; // Ignore ProseMirror's default offset of 1
+                range.startOffset !== 1;
 
             // Get insertion position
             let insertPosition;
@@ -47,17 +43,8 @@ class SpeechToTextManager {
                 insertPosition = range.startOffset;
                 this.lastKnownPosition = insertPosition;
             } else {
-                // Use last known position or end of text
                 insertPosition = this.lastKnownPosition || currentLength;
             }
-
-            console.log('Position Analysis:', {
-                hasValidSelection,
-                rangeOffset: range?.startOffset,
-                lastKnownPosition: this.lastKnownPosition,
-                currentLength,
-                chosenPosition: insertPosition
-            });
 
             const newText = currentText.slice(0, insertPosition) +
                 finalText +
@@ -78,15 +65,8 @@ class SpeechToTextManager {
                 selection?.removeAllRanges();
                 selection?.addRange(newRange);
             } catch (error) {
-                console.error('Cursor position error:', error);
+                // Silently handle cursor position errors
             }
-
-            console.log('After Update:', {
-                text: paragraphElement.textContent,
-                cursorAt: window.getSelection()?.getRangeAt(0)?.startOffset || 'no cursor',
-                textLength: paragraphElement.textContent?.length || 0
-            });
-            console.groupEnd();
 
             // Trigger input event
             const inputEvent = new InputEvent('input', {
@@ -190,26 +170,20 @@ class SpeechToTextManager {
 
     private async initialize(): Promise<void> {
         try {
-            console.log('Initializing speech-to-text...');
             await this.waitForTextArea();
-            console.log('Found textarea:', this.elements.textArea);
-
             this.elements.micButton = this.createMicButton();
             this.elements.interimDisplay = this.createInterimDisplay();
 
             const textAreaContainer = this.elements.textArea?.parentElement;
             if (textAreaContainer) {
-                console.log('Adding elements to container');
                 textAreaContainer.style.position = 'relative';
                 textAreaContainer.appendChild(this.elements.interimDisplay);
-            } else {
-                console.error('No textarea container found');
             }
 
             this.setupEventListeners();
             this.injectStyles();
         } catch (error) {
-            console.error('Failed to initialize speech-to-text:', error);
+            // Handle initialization error silently
         }
     }
 
@@ -292,7 +266,7 @@ class SpeechToTextManager {
         link.rel = 'stylesheet';
         link.href = chrome.runtime.getURL('assets/styles.css');
         document.head.appendChild(link);
-        
+
         // Only inject theme-dependent styles
         const style = document.createElement('style');
         const buttonId = this.MIC_BUTTON_ID;
@@ -328,8 +302,6 @@ class SpeechToTextManager {
 }
 
 (() => {
-    console.log('Starting speech-to-text initialization...');
     const manager = new SpeechToTextManager();
-    // Add the mutation observer to watch for DOM changes
     manager.initMutationObserver();
 })();

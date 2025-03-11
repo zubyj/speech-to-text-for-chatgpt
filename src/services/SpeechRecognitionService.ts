@@ -75,7 +75,6 @@ class SpeechRecognitionService {
     }
 
     private handleError(error: SpeechRecognitionError) {
-        console.error('Speech recognition error:', error);
         // Implement error handling UI feedback
     }
 
