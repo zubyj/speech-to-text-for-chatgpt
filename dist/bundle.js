@@ -311,9 +311,10 @@ class SpeechToTextManager {
             }
 
             #${this.MIC_BUTTON_ID}:hover {
-                background-color: ${this.isLightMode() ?
-            'rgba(0, 0, 0, 0.05)' :
-            'rgba(255, 255, 255, 0.1)'};
+                background-color: ${this.isLightMode()
+            ? 'rgba(0, 0, 0, 0.07)' // Made darker from 0.05 to 0.07
+            : 'rgb(64, 65, 79)' // This is equivalent to tailwind's gray-700
+        };
             }
 
             #${this.MIC_BUTTON_ID}.active {
@@ -380,7 +381,7 @@ class SpeechToTextManager {
                 if (micIcon) {
                     micIcon.style.filter = isLight ? 'brightness(0.4)' : 'none';
                 }
-                this.elements.micButton.style.setProperty('--hover-bg', isLight ? 'rgba(0, 0, 0, 0.05)' : 'rgba(255, 255, 255, 0.1)');
+                this.elements.micButton.style.setProperty('--hover-bg', isLight ? 'rgba(0, 0, 0, 0.07)' : 'rgb(64, 65, 79)');
             }
         });
         observer.observe(document.documentElement, {
