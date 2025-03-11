@@ -57,6 +57,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 class SpeechToTextManager {
     updateText(finalText, interimText) {
+        var _a, _b, _c, _d;
         if (!this.elements.textArea || !this.elements.interimDisplay)
             return;
         let paragraphElement = this.elements.textArea.querySelector('p');
@@ -67,27 +68,46 @@ class SpeechToTextManager {
         if (finalText) {
             const selection = window.getSelection();
             const range = selection === null || selection === void 0 ? void 0 : selection.getRangeAt(0);
+            console.group('Text Update Operation');
+            console.log('Before Update:', {
+                text: paragraphElement.textContent,
+                cursorAt: (range === null || range === void 0 ? void 0 : range.startOffset) || 'no cursor',
+                textLength: ((_a = paragraphElement.textContent) === null || _a === void 0 ? void 0 : _a.length) || 0
+            });
             if (selection && range && paragraphElement.contains(range.commonAncestorContainer)) {
-                // Get the current cursor position
                 const currentPos = range.startOffset;
                 const currentText = paragraphElement.textContent || '';
-                // Insert new text at cursor position
                 const newText = currentText.slice(0, currentPos) +
                     finalText +
                     currentText.slice(currentPos);
                 // Update content
                 paragraphElement.textContent = newText;
                 // Restore cursor position after the inserted text
+                const newPos = currentPos + finalText.length;
                 const newRange = document.createRange();
-                newRange.setStart(paragraphElement.firstChild || paragraphElement, currentPos + finalText.length);
+                newRange.setStart(paragraphElement.firstChild || paragraphElement, newPos);
                 newRange.collapse(true);
                 selection.removeAllRanges();
                 selection.addRange(newRange);
+                console.log('Cursor Operation:', {
+                    originalPosition: currentPos,
+                    insertedTextLength: finalText.length,
+                    newPosition: newPos
+                });
             }
             else {
-                // Fallback: append to end if no valid cursor position
+                console.log('Fallback Mode:', {
+                    reason: 'No valid cursor position',
+                    action: 'Appending to end'
+                });
                 paragraphElement.textContent = (paragraphElement.textContent || '') + finalText;
             }
+            console.log('After Update:', {
+                text: paragraphElement.textContent,
+                cursorAt: ((_c = (_b = window.getSelection()) === null || _b === void 0 ? void 0 : _b.getRangeAt(0)) === null || _c === void 0 ? void 0 : _c.startOffset) || 'no cursor',
+                textLength: ((_d = paragraphElement.textContent) === null || _d === void 0 ? void 0 : _d.length) || 0
+            });
+            console.groupEnd();
             // Trigger input event
             const inputEvent = new InputEvent('input', {
                 bubbles: true,
@@ -273,12 +293,13 @@ class SpeechToTextManager {
         button.className = 'speech-to-text-button';
         button.type = 'button';
         button.setAttribute('aria-label', 'Toggle speech to text');
-        // Create the mic icon
+        // Create the mic icon with specific size
         const micIcon = document.createElement('img');
         micIcon.src = chrome.runtime.getURL('assets/mic.png');
         micIcon.alt = 'Microphone';
+        micIcon.style.width = '16px'; // Make icon smaller
+        micIcon.style.height = '16px';
         button.appendChild(micIcon);
-        // Add click listener
         button.addEventListener('click', this.toggleSpeech);
         return button;
     }
@@ -296,10 +317,10 @@ class SpeechToTextManager {
         style.textContent = `
             #${this.MIC_BUTTON_ID} {
                 background-repeat: no-repeat;
-                background-size: 20px;
+                background-size: 16px;
                 justify-content: center;
-                width: 32px;
-                height: 32px;
+                width: 28px;
+                height: 28px;
                 position: absolute;
                 left: 10px;
                 top: 50%;
@@ -311,6 +332,9 @@ class SpeechToTextManager {
                 background-color: transparent;
                 background-position: center;
                 cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
             }
 
             #${this.MIC_BUTTON_ID}:hover {

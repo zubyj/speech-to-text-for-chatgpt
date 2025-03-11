@@ -30,12 +30,17 @@ class SpeechToTextManager {
             const selection = window.getSelection();
             const range = selection?.getRangeAt(0);
 
+            console.group('Text Update Operation');
+            console.log('Before Update:', {
+                text: paragraphElement.textContent,
+                cursorAt: range?.startOffset || 'no cursor',
+                textLength: paragraphElement.textContent?.length || 0
+            });
+
             if (selection && range && paragraphElement.contains(range.commonAncestorContainer)) {
-                // Get the current cursor position
                 const currentPos = range.startOffset;
                 const currentText = paragraphElement.textContent || '';
 
-                // Insert new text at cursor position
                 const newText = currentText.slice(0, currentPos) +
                     finalText +
                     currentText.slice(currentPos);
@@ -44,15 +49,32 @@ class SpeechToTextManager {
                 paragraphElement.textContent = newText;
 
                 // Restore cursor position after the inserted text
+                const newPos = currentPos + finalText.length;
                 const newRange = document.createRange();
-                newRange.setStart(paragraphElement.firstChild || paragraphElement, currentPos + finalText.length);
+                newRange.setStart(paragraphElement.firstChild || paragraphElement, newPos);
                 newRange.collapse(true);
                 selection.removeAllRanges();
                 selection.addRange(newRange);
+
+                console.log('Cursor Operation:', {
+                    originalPosition: currentPos,
+                    insertedTextLength: finalText.length,
+                    newPosition: newPos
+                });
             } else {
-                // Fallback: append to end if no valid cursor position
+                console.log('Fallback Mode:', {
+                    reason: 'No valid cursor position',
+                    action: 'Appending to end'
+                });
                 paragraphElement.textContent = (paragraphElement.textContent || '') + finalText;
             }
+
+            console.log('After Update:', {
+                text: paragraphElement.textContent,
+                cursorAt: window.getSelection()?.getRangeAt(0)?.startOffset || 'no cursor',
+                textLength: paragraphElement.textContent?.length || 0
+            });
+            console.groupEnd();
 
             // Trigger input event
             const inputEvent = new InputEvent('input', {
