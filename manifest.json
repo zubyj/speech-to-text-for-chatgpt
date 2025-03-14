@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
     "name": "Speech to Text for ChatGPT",
-    "version": "0.0.5",
+    "version": "0.0.6",
     "description": "Adds a speech to text microphone into the ChatGPT website.",
     "icons": {
         "16": "assets/icons/icon-16.png",
