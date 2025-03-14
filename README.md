@@ -1,40 +1,91 @@
 # Speech to Text for ChatGPT
-[Open in the Chrome Web Store](https://chrome.google.com/webstore/detail/speech-to-text-for-chatgp/kplchkeabimhnpklakhhocnhegidpcel?hl=en&authuser=1)
 
-A browser extension that adds a speech to text microphone to the ChatGPT website.
+A Chrome extension that adds speech-to-text capability to ChatGPT, allowing for hands-free interaction with the AI assistant.
+
+![Extension Demo](assets/demo.gif)
 
 ## Features
-1. **Speech to text conversion**: Click the microphone button to start converting your spoken words into text input.
-2. **Keyboard shortcuts**: Keyboard shortcuts are available for starting/stopping speech recognition, and clearing the input.
+
+- 🎤 Real-time speech-to-text conversion
+- 💬 Interim results display while speaking
+- 🌓 Light/Dark mode support
+- ⌨️ Keyboard shortcut (Cmd/Ctrl + M)
+- 📊 Visual microphone activity indicator
+- 🔌 Automatic mic disconnection on silence
 
 ## Installation
-Download it in the [Chrome Web Store](https://chrome.google.com/webstore/detail/speech-to-text-for-chatgp/kplchkeabimhnpklakhhocnhegidpcel?hl=en&authuser=1)
 
-OR
+### From Chrome Web Store
 
-1. Download or clone this repository.
-2. Navigate to chrome://extensions.
-   - Alternatively, open this page by clicking on the Chrome menu, hovering over More Tools, and selecting Extensions.
-3. Enable Developer Mode by clicking the toggle switch next to Developer mode.
-4. Click the Load unpacked button and select the downloaded directory.
-5. Open chat.openai.com and press Cmd+M to get started!
+1. Visit the [Chrome Web Store](https://chrome.google.com/webstore/detail/your-extension-id)
+2. Click "Add to Chrome"
+3. Confirm the installation
 
-## How to use
-- Click the microphone button in the input field to start converting your spoken words into text.
-- The microphone button will change its image when it's actively listening.
-- You can use the following keyboard shortcuts:
-  - `Ctrl+M` (or `Cmd+M` on macOS) to toggle the microphone on/off.
-  - `Ctrl+D` (or `Cmd+D` on macOS) to clear the current input.
-  - `Ctrl+B` (or `Cmd+B` on macOS) to remove the last word from the input.
+### Local Development
 
+1. Clone the repository:
+```bash
+git clone https://github.com/yourusername/speech-to-text-for-chatgpt.git
+```
 
-## Permissions
-This extension requires the following permissions:
-- Access to `https://chat.openai.com/*` for inserting the speech-to-text functionality.
-- Web-accessible resources: assets (mic icons and styles) that need to be loaded into the webpage.
+2. Install dependencies:
+```bash
+npm install
+```
 
-## Version
-Current version is 0.0.3
+3. Build the extension:
+```bash
+npm run build
+```
+
+4. Load the extension in Chrome:
+   - Open `chrome://extensions/`
+   - Enable "Developer mode"
+   - Click "Load unpacked"
+   - Select the `dist` folder
+
+## Usage
+
+1. Visit [ChatGPT](https://chat.openai.com)
+2. Look for the microphone icon next to the text input
+3. Click the mic or press Cmd/Ctrl + M to start recording
+4. Speak naturally - your words will appear in the text box
+5. Click again or press Cmd/Ctrl + M to stop
+
+## Development
+
+```bash
+# Watch for changes
+npm run watch
+
+# Build for production
+npm run build
+
+# Package for Chrome Web Store
+npm run package
+```
+
+## Privacy
+
+This extension:
+- Only activates on chat.openai.com
+- Only requests microphone access when activated
+- Does not store or transmit any audio data
+- Processes all speech recognition locally
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
 ## License
-This project is licensed under the terms of the MIT license.
+
+Distributed under the MIT License. See `LICENSE` for more information.
+
+## Acknowledgments
+
+- Icons by [Material Design Icons](https://material.io/icons)
+- Built with TypeScript and Chrome Extension APIs
