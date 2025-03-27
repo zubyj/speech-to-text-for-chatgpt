@@ -188,12 +188,22 @@ class SpeechToTextManager {
     }
 
     private async waitForTextArea(retryCount = 0): Promise<void> {
+        console.log('Attempting to find textarea...');
         const textarea = document.querySelector('#prompt-textarea.ProseMirror');
+        console.log('Found textarea:', textarea);
 
         if (textarea) {
             this.elements.textArea = textarea as HTMLTextAreaElement;
             return;
         }
+
+        // Log all textareas on the page to see what's available
+        const allTextareas = document.querySelectorAll('textarea');
+        console.log('All textareas on page:', allTextareas);
+
+        // Log the entire prompt area structure
+        const promptArea = document.querySelector('.prompt-area');
+        console.log('Prompt area structure:', promptArea?.innerHTML);
 
         if (retryCount >= this.MAX_RETRIES) {
             throw new Error('Failed to find textarea after maximum retries');
@@ -288,14 +298,18 @@ class SpeechToTextManager {
     private addMicButtonToTextArea(): void {
         if (!this.elements.textArea || !this.elements.micButton) return;
 
-        // Find the flex container
-        const flexContainer = document.querySelector('.flex.gap-x-1\\.5');
-        if (!flexContainer) return;
+        // Look for the flex container that holds the action buttons (upload, search, etc.)
+        const actionContainer = document.querySelector('.bg-primary-surface-primary .flex.items-center.gap-2');
 
-        // Insert after the first child
-        const firstChild = flexContainer.firstChild;
-        if (firstChild) {
-            flexContainer.insertBefore(this.elements.micButton, firstChild.nextSibling);
+        if (!actionContainer) {
+            console.log('Could not find action container');
+            return;
+        }
+
+        // Insert after first action button
+        const firstAction = actionContainer.firstElementChild;
+        if (firstAction) {
+            actionContainer.insertBefore(this.elements.micButton, firstAction.nextSibling);
         }
     }
 
