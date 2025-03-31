@@ -15,7 +15,6 @@
                 "dist/bundle.js"
             ],
             "matches": [
-                "https://chat.openai.com/*",
                 "https://chatgpt.com/*"
             ]
         }
@@ -24,11 +23,9 @@
         {
             "resources": [
                 "assets/mic.png",
-                "assets/mic-active.png",
                 "assets/styles.css"
             ],
             "matches": [
-                "https://chat.openai.com/*",
                 "https://chatgpt.com/*"
             ]
         }
