@@ -19,64 +19,45 @@ class SpeechToTextManager {
     private updateText(finalText: string, interimText: string): void {
         if (!this.elements.textArea || !this.elements.interimDisplay) return;
 
-        let paragraphElement = this.elements.textArea.querySelector('p');
-        if (!paragraphElement) {
-            paragraphElement = document.createElement('p');
-            this.elements.textArea.appendChild(paragraphElement);
+        // Get the current selection
+        const selection = window.getSelection();
+        const range = selection?.getRangeAt(0);
+        
+        // If we have a valid selection within the text area
+        if (selection && range && this.elements.textArea.contains(range.commonAncestorContainer)) {
+            // Store the current position
+            this.lastKnownPosition = range.startOffset;
+            
+            // Insert text at the current selection
+            range.deleteContents();
+            range.insertNode(document.createTextNode(finalText));
+            
+            // Move cursor to end of inserted text
+            range.setStartAfter(range.endContainer);
+            range.setEndAfter(range.endContainer);
+            selection.removeAllRanges();
+            selection.addRange(range);
+        } else {
+            // If no valid selection, append to the end
+            const textNode = document.createTextNode(finalText);
+            this.elements.textArea.appendChild(textNode);
+            
+            // Move cursor to end of inserted text
+            const newRange = document.createRange();
+            newRange.setStartAfter(textNode);
+            newRange.setEndAfter(textNode);
+            selection?.removeAllRanges();
+            selection?.addRange(newRange);
         }
 
-        if (finalText) {
-            const selection = window.getSelection();
-            const range = selection?.getRangeAt(0);
-            const currentText = paragraphElement.textContent || '';
-            const currentLength = currentText.length;
-
-            // Determine if we have an active user-placed cursor
-            const hasValidSelection = selection &&
-                range &&
-                paragraphElement.contains(range.commonAncestorContainer) &&
-                range.startOffset !== 1;
-
-            // Get insertion position
-            let insertPosition;
-            if (hasValidSelection) {
-                insertPosition = range.startOffset;
-                this.lastKnownPosition = insertPosition;
-            } else {
-                insertPosition = this.lastKnownPosition || currentLength;
-            }
-
-            const newText = currentText.slice(0, insertPosition) +
-                finalText +
-                currentText.slice(insertPosition);
-
-            // Update content
-            paragraphElement.textContent = newText;
-
-            // Update last known position
-            this.lastKnownPosition = insertPosition + finalText.length;
-
-            // Set cursor position
-            try {
-                const textNode = paragraphElement.firstChild || paragraphElement;
-                const newRange = document.createRange();
-                newRange.setStart(textNode, this.lastKnownPosition);
-                newRange.setEnd(textNode, this.lastKnownPosition);
-                selection?.removeAllRanges();
-                selection?.addRange(newRange);
-            } catch (error) {
-                // Silently handle cursor position errors
-            }
-
-            // Trigger input event
-            const inputEvent = new InputEvent('input', {
-                bubbles: true,
-                cancelable: true,
-                inputType: 'insertText',
-                data: finalText
-            });
-            this.elements.textArea.dispatchEvent(inputEvent);
-        }
+        // Trigger input event
+        const inputEvent = new InputEvent('input', {
+            bubbles: true,
+            cancelable: true,
+            inputType: 'insertText',
+            data: finalText
+        });
+        this.elements.textArea.dispatchEvent(inputEvent);
 
         // Update interim display
         if (interimText) {
