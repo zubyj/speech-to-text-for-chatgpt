@@ -1,71 +1,30 @@
 #speech-to-text-button {
     position: relative;
-    overflow: visible;
     transition: all 0.2s ease;
 }
 
 #speech-to-text-button.active {
-    background-color: rgba(0, 0, 0, 0.08);
-}
-
-#speech-to-text-button.active::before,
-#speech-to-text-button.active::after {
-    content: "";
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 100%;
-    height: 100%;
-    border-radius: 50%;
-    border: 2px solid #10a37f;
-    animation: pulseRing 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-    transform: translate(-50%, -50%);
-    pointer-events: none;
-}
-
-#speech-to-text-button.active::after {
-    animation-delay: 0.6s;
+    background-color: rgba(16, 163, 127, 0.15);
+    box-shadow: 0 0 8px rgba(16, 163, 127, 0.3);
 }
 
 #speech-to-text-button.speaking {
-    background-color: rgba(16, 163, 127, 0.1) !important;
+    background-color: rgba(16, 163, 127, 0.2);
+    box-shadow: 0 0 12px rgba(16, 163, 127, 0.4);
+    animation: glow 1.5s ease-in-out infinite;
 }
 
-#speech-to-text-button.speaking::before,
-#speech-to-text-button.speaking::after {
-    border-color: #10a37f !important;
-    animation: pulseRing 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite !important;
-}
-
-@keyframes pulseRing {
+@keyframes glow {
     0% {
-        width: 100%;
-        height: 100%;
-        opacity: 0.8;
-        border-color: #10a37f;
+        box-shadow: 0 0 8px rgba(16, 163, 127, 0.3);
     }
 
     50% {
-        opacity: 0;
+        box-shadow: 0 0 16px rgba(16, 163, 127, 0.5);
     }
 
     100% {
-        width: 180%;
-        height: 180%;
-        opacity: 0;
-        border-color: transparent;
-    }
-}
-
-@keyframes pulseMic {
-
-    0%,
-    100% {
-        opacity: 1;
-    }
-
-    50% {
-        opacity: 0.7;
+        box-shadow: 0 0 8px rgba(16, 163, 127, 0.3);
     }
 }
 

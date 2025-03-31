@@ -22,16 +22,16 @@ class SpeechToTextManager {
         // Get the current selection
         const selection = window.getSelection();
         const range = selection?.getRangeAt(0);
-        
+
         // If we have a valid selection within the text area
         if (selection && range && this.elements.textArea.contains(range.commonAncestorContainer)) {
             // Store the current position
             this.lastKnownPosition = range.startOffset;
-            
+
             // Insert text at the current selection
             range.deleteContents();
             range.insertNode(document.createTextNode(finalText));
-            
+
             // Move cursor to end of inserted text
             range.setStartAfter(range.endContainer);
             range.setEndAfter(range.endContainer);
@@ -41,7 +41,7 @@ class SpeechToTextManager {
             // If no valid selection, append to the end
             const textNode = document.createTextNode(finalText);
             this.elements.textArea.appendChild(textNode);
-            
+
             // Move cursor to end of inserted text
             const newRange = document.createRange();
             newRange.setStartAfter(textNode);
