@@ -1,18 +1,66 @@
+// Add type definitions for Web Speech API
+interface SpeechRecognitionErrorEvent {
+    error: string;
+    message?: string;
+}
+
+interface SpeechRecognitionEvent {
+    resultIndex: number;
+    results: SpeechRecognitionResultList;
+}
+
+interface SpeechRecognitionResultList {
+    length: number;
+    [index: number]: SpeechRecognitionResult;
+}
+
+interface SpeechRecognitionResult {
+    isFinal: boolean;
+    length: number;
+    [index: number]: {
+        transcript: string;
+    };
+}
+
+// Define webkitSpeechRecognition interface
+interface webkitSpeechRecognition {
+    continuous: boolean;
+    interimResults: boolean;
+    lang: string;
+    start(): void;
+    stop(): void;
+    onstart: () => void;
+    onend: () => void;
+    onresult: (event: SpeechRecognitionEvent) => void;
+    onerror: (event: SpeechRecognitionErrorEvent) => void;
+}
+
+// Import the speech manager config
+import { SpeechManagerConfig, SpeechCallback } from '../types';
+
 class SpeechRecognitionService {
     private readonly NO_SPEECH_TIMEOUT = 10000; // 10 seconds
     private noSpeechTimer: number | null = null;
     private isPermissionGranted = false;
     private recognition: webkitSpeechRecognition;
-    private onTextCallback: SpeechCallback;
+    private onTextCallback: (finalText: string, interimText: string) => void;
+    private onErrorCallback?: (message: string) => void;
+    private onMicActivityChange?: (isActive: boolean) => void;
     private finalText: string = '';
     private mediaStream: MediaStream | null = null;
     private audioContext: AudioContext | null = null;
     private microphoneActive = false;
     private volumeCheckInterval: number | null = null;
 
-    constructor(config: SpeechManagerConfig, callback: SpeechCallback) {
-        this.recognition = new webkitSpeechRecognition();
+    constructor(
+        config: SpeechManagerConfig, 
+        callback: (finalText: string, interimText: string) => void,
+        errorCallback?: (message: string) => void
+    ) {
+        this.recognition = new (window as any).webkitSpeechRecognition();
         this.onTextCallback = callback;
+        this.onErrorCallback = errorCallback;
+        this.onMicActivityChange = config.onMicActivity;
         this.setupRecognition(config);
     }
 
@@ -25,7 +73,7 @@ class SpeechRecognitionService {
             this.startNoSpeechTimer();
         };
 
-        this.recognition.onresult = (event) => {
+        this.recognition.onresult = (event: SpeechRecognitionEvent) => {
             this.resetNoSpeechTimer();
             let interimTranscript = '';
             let finalTranscript = '';
@@ -54,7 +102,7 @@ class SpeechRecognitionService {
             }
         };
 
-        this.recognition.onerror = (event) => {
+        this.recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
             switch (event.error) {
                 case 'not-allowed':
                 case 'permission-denied':
@@ -74,8 +122,9 @@ class SpeechRecognitionService {
         };
     }
 
-    private handleError(error: SpeechRecognitionError) {
+    private handleError(error: Error): void {
         // Implement error handling UI feedback
+        this.onError(error.message);
     }
 
     private startNoSpeechTimer() {
@@ -162,9 +211,11 @@ class SpeechRecognitionService {
     }
 
     private onError(message: string) {
-        // Add error callback to constructor params and interface
+        // Use error callback if provided
         if (this.onErrorCallback) {
             this.onErrorCallback(message);
         }
     }
 }
+
+export default SpeechRecognitionService;

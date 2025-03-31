@@ -1,3 +1,30 @@
+// Import the SpeechRecognitionService
+import SpeechRecognitionService from './services/SpeechRecognitionService';
+import { SpeechManagerConfig, SpeechCallback, UIElements, SpeechState } from './types';
+
+// Add a simple Toast class
+class Toast {
+    private element: HTMLDivElement;
+    private readonly TOAST_DURATION = 3000; // 3 seconds
+    
+    constructor() {
+        this.element = document.createElement('div');
+        this.element.className = 'stt-toast';
+        this.element.style.display = 'none';
+        document.body.appendChild(this.element);
+    }
+    
+    show(message: string, type: 'error' | 'info' = 'info'): void {
+        this.element.textContent = message;
+        this.element.className = `stt-toast ${type}`;
+        this.element.style.display = 'block';
+        
+        setTimeout(() => {
+            this.element.style.display = 'none';
+        }, this.TOAST_DURATION);
+    }
+}
+
 class SpeechToTextManager {
     private readonly MAX_RETRIES = 5;
     private readonly INITIAL_RETRY_DELAY = 500;
@@ -131,13 +158,13 @@ class SpeechToTextManager {
             continuous: true,
             interimResults: true,
             onMicActivity: this.handleMicActivity,
-            onEnd: () => this.stopListening() // Add onEnd handler
+            onEnd: () => this.stopListening(),
+            onError: this.handleError
         };
 
         this.speechService = new SpeechRecognitionService(
             config,
-            this.updateText.bind(this),
-            this.handleError // Add error handler
+            this.updateText.bind(this)
         );
         this.initialize();
     }
@@ -196,7 +223,7 @@ class SpeechToTextManager {
         return this.waitForTextArea(retryCount + 1);
     }
 
-    private initMutationObserver(): void {
+    public initMutationObserver(): void {
         const observer = new MutationObserver((mutations) => {
             const shouldAddMic = mutations.some(mutation =>
                 mutation.type === 'childList' &&
@@ -225,7 +252,7 @@ class SpeechToTextManager {
 
         // Create the mic icon with specific size
         const micIcon = document.createElement('img');
-        micIcon.src = chrome.runtime.getURL('assets/mic.png');
+        micIcon.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLW1pYyI+PHBhdGggZD0iTTEyIDJhMyAzIDAgMCAwLTMgM3Y3YTMgMyAwIDAgMCA2IDBWNWEzIDMgMCAwIDAtMy0zWiIvPjxwYXRoIGQ9Ik0xOSAxMHYyYTcgNyAwIDAgMS0xNCAwdi0yIi8+PHBhdGggZD0iTTEyIDE5di00Ii8+PC9zdmc+'; // Base64 encoded SVG mic icon
         micIcon.alt = 'Microphone';
         micIcon.style.width = '18px';
         micIcon.style.height = '18px';
@@ -252,17 +279,39 @@ class SpeechToTextManager {
     }
 
     private injectStyles(): void {
-        // Load the CSS file from the extension
-        const link = document.createElement('link');
-        link.rel = 'stylesheet';
-        link.href = chrome.runtime.getURL('assets/styles.css');
-        document.head.appendChild(link);
-
-        // Only inject theme-dependent styles
+        // Create a style element directly instead of loading from chrome
         const style = document.createElement('style');
         const buttonId = this.MIC_BUTTON_ID;
 
         style.textContent = `
+            .stt-toast {
+                position: fixed;
+                bottom: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                padding: 12px 24px;
+                background-color: #333;
+                color: white;
+                border-radius: 4px;
+                z-index: 10000;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            }
+            
+            .stt-toast.error {
+                background-color: #d32f2f;
+            }
+            
+            #interim-display {
+                position: absolute;
+                bottom: 100%;
+                left: 0;
+                width: 100%;
+                color: gray;
+                padding: 5px;
+                margin-bottom: 5px;
+                font-style: italic;
+            }
+            
             #${buttonId} {
                 filter: ${this.isLightMode() ? 'brightness(0.98)' : 'none'};
             }
@@ -271,6 +320,15 @@ class SpeechToTextManager {
                 background-color: ${this.isLightMode()
                 ? 'rgba(0, 0, 0, 0.07)'
                 : 'rgb(64, 65, 79)'};
+            }
+            
+            #${buttonId}.speaking {
+                background-color: #10a37f;
+                border-color: #10a37f;
+            }
+            
+            #${buttonId}.speaking img {
+                filter: brightness(10);
             }
         `;
         document.head.appendChild(style);

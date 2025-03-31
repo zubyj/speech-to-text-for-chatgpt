@@ -11,6 +11,7 @@ export interface UIElements {
     textArea: HTMLTextAreaElement | null;
     displayElement: HTMLParagraphElement | null;
     micButton: HTMLButtonElement | null;
+    interimDisplay: HTMLDivElement | null;
 }
 
 export interface SpeechState {
@@ -19,4 +20,4 @@ export interface SpeechState {
     lastStopTime: number;
 }
 
-export type SpeechCallback = (text: string) => void;
+export type SpeechCallback = (finalText: string, interimText: string) => void;
